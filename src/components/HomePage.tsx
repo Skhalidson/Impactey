@@ -30,8 +30,10 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     setShowResults(false);
   };
 
-  const featuredCompanies = companies.slice(0, 6);
-  const allCompanies = companies;
+  // Alphabetically sorted companies
+  const sortedCompanies = [...companies].sort((a, b) => a.name.localeCompare(b.name));
+  const featuredCompanies = sortedCompanies.slice(0, 6);
+  const allCompanies = sortedCompanies;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-emerald-50">

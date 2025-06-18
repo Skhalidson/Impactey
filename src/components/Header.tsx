@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowLeft, Bookmark, Home, Search } from 'lucide-react';
+import logo from '../assets/impactey-logo.png';
 
 interface HeaderProps {
   currentPage: string;
@@ -24,9 +25,7 @@ const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate }) => {
               className="flex items-center space-x-2 cursor-pointer"
               onClick={() => onNavigate('home')}
             >
-              <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
-                <Search className="w-4 h-4 text-white" />
-              </div>
+              <img src={logo} alt="Impactey Logo" className="w-8 h-8 rounded-full bg-emerald-100 border border-emerald-200" />
               <h1 className="text-xl font-bold text-slate-800">Impactey</h1>
             </div>
           </div>
