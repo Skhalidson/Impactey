@@ -13,7 +13,7 @@ function App() {
 
   // Load bookmarks from localStorage on component mount
   useEffect(() => {
-    const savedBookmarks = localStorage.getItem('impactly-bookmarks');
+    const savedBookmarks = localStorage.getItem('impactey-bookmarks');
     if (savedBookmarks) {
       setBookmarkedCompanies(JSON.parse(savedBookmarks));
     }
@@ -21,7 +21,7 @@ function App() {
 
   // Save bookmarks to localStorage whenever bookmarks change
   useEffect(() => {
-    localStorage.setItem('impactly-bookmarks', JSON.stringify(bookmarkedCompanies));
+    localStorage.setItem('impactey-bookmarks', JSON.stringify(bookmarkedCompanies));
   }, [bookmarkedCompanies]);
 
   const handleNavigate = (page: string, companyId?: string) => {
