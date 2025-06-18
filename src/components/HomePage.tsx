@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, TrendingUp, Shield, Leaf, Users } from 'lucide-react';
+import { Search, TrendingUp, Shield, Leaf, Users, ChevronDown, ChevronUp } from 'lucide-react';
 import { searchCompanies, companies } from '../data/companies';
 import { Company } from '../types';
 
@@ -11,6 +11,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Company[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [showAllCompanies, setShowAllCompanies] = useState(false);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -29,7 +30,8 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     setShowResults(false);
   };
 
-  const featuredCompanies = companies.slice(0, 3);
+  const featuredCompanies = companies.slice(0, 6);
+  const allCompanies = companies;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-emerald-50">
@@ -115,7 +117,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           {/* Featured Companies */}
           <div className="text-left">
             <h2 className="text-2xl font-bold text-slate-800 mb-8 text-center">Featured Companies</h2>
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-3 gap-6 mb-8">
               {featuredCompanies.map((company) => (
                 <button
                   key={company.id}
@@ -142,6 +144,53 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                 </button>
               ))}
             </div>
+
+            {/* Show All Companies Toggle */}
+            <div className="text-center">
+              <button
+                onClick={() => setShowAllCompanies(!showAllCompanies)}
+                className="inline-flex items-center space-x-2 bg-white px-6 py-3 rounded-xl shadow-md hover:shadow-lg transition-all text-emerald-700 font-medium"
+              >
+                <span>{showAllCompanies ? 'Hide All Companies' : 'Show All Companies'}</span>
+                {showAllCompanies ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+            </div>
+
+            {/* All Companies Grid */}
+            {showAllCompanies && (
+              <div className="mt-8">
+                <h3 className="text-xl font-bold text-slate-800 mb-6 text-center">
+                  All Available Companies ({allCompanies.length})
+                </h3>
+                <div className="grid md:grid-cols-4 lg:grid-cols-5 gap-4 max-h-96 overflow-y-auto bg-white rounded-xl p-6 shadow-md">
+                  {allCompanies.map((company) => (
+                    <button
+                      key={company.id}
+                      onClick={() => handleCompanySelect(company.id)}
+                      className="p-4 rounded-lg hover:bg-emerald-50 transition-colors text-left border border-gray-100 hover:border-emerald-200"
+                    >
+                      <div className="flex items-center space-x-2 mb-2">
+                        <span className="text-xl">{company.logo}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-slate-800 text-sm truncate">{company.name}</div>
+                          <div className="text-xs text-slate-500 truncate">{company.sector}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-slate-600">Score</span>
+                        <div className="flex items-center space-x-1">
+                          <div className={`w-2 h-2 rounded-full ${
+                            company.impactScore >= 7 ? 'bg-green-500' :
+                            company.impactScore >= 5 ? 'bg-yellow-500' : 'bg-red-500'
+                          }`}></div>
+                          <span className="text-sm font-bold text-slate-800">{company.impactScore}</span>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
