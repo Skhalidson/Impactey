@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowLeft, Bookmark, Home, Search } from 'lucide-react';
 import logo from '../assets/impactey-logo.png';
+import { motion } from 'framer-motion';
 
 interface HeaderProps {
   currentPage: string;
@@ -9,7 +10,12 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate }) => {
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <motion.header
+      initial={{ opacity: 0, y: -30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: 'easeOut' }}
+      className="bg-white border-b border-gray-200 sticky top-0 z-50"
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-4">
@@ -54,7 +60,7 @@ const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate }) => {
           </nav>
         </div>
       </div>
-    </header>
+    </motion.header>
   );
 };
 
