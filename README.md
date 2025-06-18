@@ -118,7 +118,23 @@ src/
 
 ## Environment Variables
 
-No environment variables are currently required for this application.
+To use the FinancialModelingPrep ESG API, create a `.env` file in the root directory:
+
+```bash
+# FinancialModelingPrep API Key
+# Get your free API key from: https://financialmodelingprep.com/developer/docs/
+VITE_FMP_API_KEY=your_api_key_here
+
+# ESG API Key (for future use)
+VITE_ESG_API_KEY=your_esg_api_key_here
+```
+
+### Getting an API Key
+
+1. Visit [FinancialModelingPrep](https://financialmodelingprep.com/developer/docs/)
+2. Sign up for a free account
+3. Get your API key from the dashboard
+4. Add it to your `.env` file
 
 ## Browser Support
 

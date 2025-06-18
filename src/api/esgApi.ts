@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 // ESG API Types
 export interface ESGData {
   companyId: string;
@@ -44,6 +46,15 @@ export interface ESGData {
     ftse4good: string; // FTSE4Good Index inclusion
     dowJones: string; // DJSI inclusion
   };
+}
+
+// FinancialModelingPrep API Types
+export interface FMPESGScores {
+  symbol: string;
+  esgScore: number;
+  environmentScore: number;
+  socialScore: number;
+  governanceScore: number;
 }
 
 export interface ESGSearchParams {
@@ -431,5 +442,52 @@ export async function fetchESGDataBySector(sector: string): Promise<ESGData[]> {
     );
   } catch (error) {
     throw new ESGAPIError(`Failed to fetch ESG data by sector: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * Fetch ESG scores from FinancialModelingPrep API
+ * @param ticker - Company ticker symbol (e.g., 'AAPL', 'MSFT')
+ * @returns Promise<FMPESGScores | null> - ESG scores or null if fetch fails
+ */
+export async function fetchESGScores(ticker: string): Promise<FMPESGScores | null> {
+  try {
+    const apiKey = import.meta.env.VITE_FMP_API_KEY;
+    
+    if (!apiKey) {
+      console.warn('VITE_FMP_API_KEY not found in environment variables');
+      return null;
+    }
+
+    const url = `https://financialmodelingprep.com/api/v3/esg-environmental-social-governance/${ticker.toUpperCase()}?apikey=${apiKey}`;
+    
+    const response = await axios.get<FMPESGScores[]>(url, {
+      timeout: 10000, // 10 second timeout
+    });
+
+    if (!response.data || response.data.length === 0) {
+      console.warn(`No ESG data found for ticker: ${ticker}`);
+      return null;
+    }
+
+    // Return the first object from the array as specified
+    return response.data[0];
+
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 404) {
+        console.warn(`ESG data not found for ticker: ${ticker}`);
+      } else if (error.response?.status === 401) {
+        console.error('Invalid API key for FinancialModelingPrep');
+      } else if (error.response?.status === 429) {
+        console.error('API rate limit exceeded');
+      } else {
+        console.error(`API request failed for ${ticker}:`, error.response?.statusText || error.message);
+      }
+    } else {
+      console.error(`Unexpected error fetching ESG scores for ${ticker}:`, error);
+    }
+    
+    return null;
   }
 } 
