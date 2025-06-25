@@ -3,8 +3,13 @@ import Header from './components/Header';
 import HomePage from './components/HomePage';
 import CompanyPage from './components/CompanyPage';
 import WatchlistPage from './components/WatchlistPage';
+import PortfolioPage from './components/PortfolioPage';
+import ComparePage from './components/ComparePage';
+import AIPage from './components/AIPage';
+import AlertsPage from './components/AlertsPage';
+import ESGExplorer from './components/ESGExplorer';
 import { findCompanyById } from './data/companies';
-import { Company } from './types';
+import { Company } from './types/index';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -69,6 +74,21 @@ function App() {
         // If no company found, redirect to home
         setCurrentPage('home');
         return <HomePage onNavigate={handleNavigate} />;
+      
+      case 'portfolio':
+        return <PortfolioPage onNavigate={handleNavigate} />;
+      
+      case 'compare':
+        return <ComparePage onNavigate={handleNavigate} />;
+      
+      case 'ai':
+        return <AIPage onNavigate={handleNavigate} />;
+      
+      case 'alerts':
+        return <AlertsPage onNavigate={handleNavigate} />;
+      
+      case 'explorer':
+        return <ESGExplorer />;
       
       case 'watchlist':
         return (

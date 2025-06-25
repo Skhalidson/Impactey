@@ -1,6 +1,6 @@
 import React from 'react';
 import { Bookmark, TrendingUp, AlertTriangle, Search, BookmarkX } from 'lucide-react';
-import { Company } from '../types';
+import { Company } from '../types/index';
 
 interface WatchlistPageProps {
   savedCompanies: Company[];

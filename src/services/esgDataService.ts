@@ -1,6 +1,6 @@
 import { fetchESGScores, FMPESGScores } from '../api/esgApi';
 import { companies } from '../data/companies';
-import { Company } from '../types';
+import { Company } from '../types/index';
 
 // Enhanced ESG data interface that combines live and prototype data
 export interface UnifiedESGData {

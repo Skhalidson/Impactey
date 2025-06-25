@@ -1,4 +1,4 @@
-import { Company } from '../types';
+import { Company } from '../types/index';
 
 export const companies: Company[] = [
   {
