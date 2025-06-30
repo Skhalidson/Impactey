@@ -29,6 +29,7 @@ export interface PortfolioHolding {
   weight?: number;
   companyName?: string;
   esgData?: ESGData;
+  unifiedESGData?: import('../services/esgDataService').UnifiedESGData;
   isLiveData: boolean;
   sector?: string;
 }

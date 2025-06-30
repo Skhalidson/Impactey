@@ -1,6 +1,7 @@
 import { fetchESGScores, FMPESGScores } from '../api/esgApi';
 import { companies } from '../data/companies';
 import { Company } from '../types/index';
+import { tickerService } from './tickerService';
 
 // Enhanced ESG data interface that combines live and prototype data
 export interface UnifiedESGData {
@@ -11,7 +12,7 @@ export interface UnifiedESGData {
   environmentScore: number;
   socialScore: number;
   governanceScore: number;
-  dataSource: 'live' | 'prototype';
+  dataSource: 'live' | 'prototype' | 'demo';
   lastUpdated: string;
   // Additional prototype data when available
   prototypeData?: {
@@ -111,7 +112,64 @@ export async function getUnifiedESGData(ticker: string): Promise<UnifiedESGData 
     };
   }
   
+  // If no prototype data exists, create a demo placeholder for valid ticker symbols
+  const tickerData = tickerService.getTickerBySymbol(normalizedTicker);
+  if (tickerData) {
+    return generateDemoESGData(normalizedTicker, tickerData);
+  }
+  
   return null;
+}
+
+/**
+ * Generate demo ESG data for any valid ticker symbol
+ * @param ticker - Valid ticker symbol from ticker service
+ * @param tickerData - Ticker information from FMP
+ * @returns UnifiedESGData with demo scores
+ */
+export function generateDemoESGData(ticker: string, tickerData: any): UnifiedESGData {
+  // Generate consistent but random-looking scores based on ticker symbol
+  const hash = ticker.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const seed = hash % 100;
+  
+  // Generate scores that look realistic (not too perfect, some variation)
+  const esgScore = Math.round((5 + (seed % 4) + Math.sin(hash) * 2) * 10) / 10;
+  const environmentScore = Math.round((4 + (seed % 5) + Math.cos(hash) * 2) * 10) / 10;
+  const socialScore = Math.round((5 + (seed % 4) + Math.sin(hash * 2) * 2) * 10) / 10;
+  const governanceScore = Math.round((6 + (seed % 3) + Math.cos(hash * 3) * 1.5) * 10) / 10;
+
+  return {
+    symbol: ticker,
+    companyName: tickerData.name || ticker,
+    sector: tickerData.sector || 'Technology', // Default to Technology if no sector
+    esgScore: Math.min(10, Math.max(0, esgScore)),
+    environmentScore: Math.min(10, Math.max(0, environmentScore)),
+    socialScore: Math.min(10, Math.max(0, socialScore)),
+    governanceScore: Math.min(10, Math.max(0, governanceScore)),
+    dataSource: 'demo',
+    lastUpdated: new Date().toISOString().split('T')[0],
+    prototypeData: {
+      logo: '📊',
+      summary: `Demo ESG analysis for ${tickerData.name || ticker}. This is placeholder data for demonstration purposes. ${tickerData.type === 'etf' ? 'ETF' : 'Stock'} analysis shows moderate ESG performance across key metrics.`,
+      controversies: seed % 3 === 0 ? [
+        {
+          title: `Environmental compliance review - ${ticker}`,
+          year: '2023',
+          severity: 'low' as const
+        }
+      ] : [],
+      impactMetrics: {
+        carbonFootprint: Math.round(seed * 2),
+        waterUsage: Math.round(seed * 1000),
+        wasteGenerated: Math.round(seed * 100),
+        renewableEnergyPercentage: Math.round(seed % 80 + 10),
+        employeeSatisfaction: Math.round((seed % 40 + 60) / 10),
+        diversityScore: Math.round((seed % 30 + 60) / 10),
+        boardIndependence: Math.round(seed % 40 + 50),
+        executivePayRatio: Math.round(seed * 10 + 100),
+      }
+    }
+  };
 }
 
 /**
@@ -201,6 +259,15 @@ export async function getUnifiedESGDataBySector(sector: string): Promise<Unified
   
   const tickers = sectorCompanies.map(company => company.ticker);
   return getMultipleUnifiedESGData(tickers);
+}
+
+/**
+ * Get ESG data for a ticker (alias for getUnifiedESGData for backward compatibility)
+ * @param ticker - Company ticker symbol
+ * @returns Promise<UnifiedESGData | null> - ESG data or null if not found
+ */
+export async function getESGData(ticker: string): Promise<UnifiedESGData | null> {
+  return getUnifiedESGData(ticker);
 }
 
 /**

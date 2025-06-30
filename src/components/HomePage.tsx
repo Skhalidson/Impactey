@@ -1,17 +1,27 @@
 import React, { useState } from 'react';
-import { Search, TrendingUp, Shield, Leaf, Users, ChevronDown, ChevronUp, Target, BarChart3, AlertTriangle } from 'lucide-react';
+import { Search, TrendingUp, Shield, Leaf, Users, ChevronDown, ChevronUp, ChevronRight, Target, BarChart3, AlertTriangle } from 'lucide-react';
 import { searchCompanies, companies } from '../data/companies';
 import { Company } from '../types/index';
+import { useTickerStats, useTickerSearch } from '../hooks/useTickerService';
+import { TickerData } from '../services/tickerService';
+import DataStatusBanner from './DataStatusBanner';
 
 interface HomePageProps {
   onNavigate: (page: string, companyId?: string) => void;
+  onInstrumentSelect?: (ticker: TickerData) => void;
 }
 
-const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
+const HomePage: React.FC<HomePageProps> = ({ onNavigate, onInstrumentSelect }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Company[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [showAllCompanies, setShowAllCompanies] = useState(false);
+  const [liveSearchQuery, setLiveSearchQuery] = useState('');
+  const [showLiveSearch, setShowLiveSearch] = useState(false);
+  
+  // Live ticker data
+  const { totalStocks, totalETFs, isLoading, error } = useTickerStats();
+  const { search: searchLiveTickers, results: liveResults, isSearching, searchError } = useTickerSearch();
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -30,6 +40,25 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     setShowResults(false);
   };
 
+  const handleLiveSearch = (query: string) => {
+    setLiveSearchQuery(query);
+    if (query.trim().length > 0) {
+      searchLiveTickers(query, 50);
+      setShowLiveSearch(true);
+    } else {
+      setShowLiveSearch(false);
+    }
+  };
+
+  const handleLiveTickerSelect = (ticker: TickerData) => {
+    if (onInstrumentSelect) {
+      onInstrumentSelect(ticker);
+    } else {
+      // Fallback to portfolio page
+      onNavigate('portfolio');
+    }
+  };
+
   // Alphabetically sorted companies
   const sortedCompanies = [...companies].sort((a, b) => a.name.localeCompare(b.name));
   const featuredCompanies = sortedCompanies.slice(0, 6);
@@ -39,6 +68,140 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-emerald-50">
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-20">
+        
+        {/* Data Status Banner */}
+        <DataStatusBanner />
+        
+        {/* Live Market Search Section */}
+        <div className="mb-12 bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">
+              Search All Market Instruments
+            </h2>
+            {isLoading ? (
+              <p className="text-slate-600">
+                <span className="animate-pulse">Loading market data...</span>
+              </p>
+            ) : error && totalStocks === 0 && totalETFs === 0 ? (
+              <p className="text-red-600">
+                Unable to load instruments—please try again later
+              </p>
+            ) : (
+              <p className="text-slate-600">
+                Search through {(totalStocks + totalETFs).toLocaleString()} live stocks and ETFs from global exchanges
+                {error && (
+                  <span className="text-amber-600 text-sm block mt-1">
+                    ⚠️ Some data may be incomplete
+                  </span>
+                )}
+              </p>
+            )}
+          </div>
+
+          <div className="relative max-w-3xl mx-auto">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Search any stock or ETF (e.g., AAPL, Tesla, QQQ, VANGUARD, MICROSOFT...)"
+                value={liveSearchQuery}
+                onChange={(e) => handleLiveSearch(e.target.value)}
+                className="w-full pl-12 pr-4 py-4 text-lg border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white shadow-sm"
+                disabled={isLoading || (!!error && totalStocks === 0 && totalETFs === 0)}
+              />
+              {isSearching && (
+                <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-emerald-500"></div>
+                </div>
+              )}
+            </div>
+
+            {/* Live Search Results */}
+            {showLiveSearch && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl z-50 max-h-96 overflow-y-auto">
+                <div className="p-4 border-b border-gray-100 bg-gray-50">
+                  <div className="text-sm text-slate-600">
+                    {searchError ? (
+                      <span className="text-red-600">{searchError}</span>
+                    ) : liveResults.length > 0 ? (
+                      `Found ${liveResults.length} results ${liveResults.length === 50 ? '(showing top 50)' : ''}`
+                    ) : isSearching ? (
+                      'Searching...'
+                    ) : (
+                      'No matches found'
+                    )}
+                  </div>
+                </div>
+                
+                {searchError ? (
+                  <div className="p-6 text-center">
+                    <div className="text-red-500 mb-2">⚠️</div>
+                    <div className="text-sm text-red-600 mb-3">{searchError}</div>
+                    <button
+                      onClick={() => handleLiveSearch(liveSearchQuery)}
+                      className="text-xs text-emerald-600 hover:text-emerald-700 font-medium"
+                    >
+                      Try again
+                    </button>
+                  </div>
+                ) : liveResults.length > 0 ? (
+                  <div className="max-h-80 overflow-y-auto">
+                    {liveResults.map((ticker, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleLiveTickerSelect(ticker)}
+                        className="w-full px-4 py-3 text-left hover:bg-emerald-50 flex items-center justify-between border-b border-gray-100 last:border-b-0 transition-colors"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-3 mb-1">
+                            <span className="font-semibold text-slate-900">{ticker.symbol}</span>
+                            <span className={`text-xs px-2 py-1 rounded font-medium ${
+                              ticker.type === 'stock' 
+                                ? 'bg-blue-100 text-blue-800' 
+                                : 'bg-green-100 text-green-800'
+                            }`}>
+                              {ticker.type.toUpperCase()}
+                            </span>
+                          </div>
+                          <p className="text-sm text-slate-600 truncate">{ticker.name}</p>
+                          <p className="text-xs text-slate-500">
+                            {ticker.exchangeShortName} • ${ticker.price?.toFixed(2) || 'N/A'}
+                          </p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-slate-400" />
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  !isSearching && liveSearchQuery && (
+                    <div className="p-4 text-center text-slate-500">
+                      <div className="mb-2">No instruments found for "{liveSearchQuery}"</div>
+                      <div className="text-xs">Try searching by ticker symbol or company name</div>
+                    </div>
+                  )
+                )}
+              </div>
+            )}
+
+            {/* Quick Search Examples */}
+            {!showLiveSearch && !liveSearchQuery && (
+              <div className="mt-4 text-center">
+                <p className="text-sm text-slate-500 mb-3">Try these popular searches:</p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {['AAPL', 'TSLA', 'MSFT', 'GOOGL', 'AMZN', 'SPY', 'QQQ', 'VTI'].map((example) => (
+                    <button
+                      key={example}
+                      onClick={() => handleLiveSearch(example)}
+                      className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-emerald-100 hover:text-emerald-700 transition-colors"
+                    >
+                      {example}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
         <div className="text-center max-w-4xl mx-auto">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-800 mb-6 leading-tight">
             See How Sustainable Your 
@@ -183,9 +346,38 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             </div>
           </div>
 
+          {/* Market Coverage Stats */}
+          {!isLoading && !error && (totalStocks + totalETFs) > 10000 && (
+            <div className="bg-gradient-to-r from-emerald-50 to-blue-50 rounded-2xl p-6 mb-16">
+              <h2 className="text-2xl font-bold text-slate-800 mb-6 text-center">Global Market Coverage</h2>
+              <div className="grid md:grid-cols-3 gap-6">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-blue-600 mb-2">{totalStocks.toLocaleString()}</div>
+                  <div className="text-slate-600">Stocks Available</div>
+                  <div className="text-sm text-slate-500 mt-1">From {Math.floor(totalStocks / 1000)}+ companies worldwide</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-green-600 mb-2">{totalETFs.toLocaleString()}</div>
+                  <div className="text-slate-600">ETFs Available</div>
+                  <div className="text-sm text-slate-500 mt-1">Covering all major asset classes</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-purple-600 mb-2">200+</div>
+                  <div className="text-slate-600">Global Exchanges</div>
+                  <div className="text-sm text-slate-500 mt-1">NYSE, NASDAQ, LSE, TSE, and more</div>
+                </div>
+              </div>
+              <div className="text-center mt-6">
+                <p className="text-slate-600">
+                  🌍 Real-time data from Financial Modeling Prep • Updated daily • Cached for performance
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Featured Companies */}
           <div className="text-left">
-            <h2 className="text-2xl font-bold text-slate-800 mb-8 text-center">Explore ESG Data</h2>
+            <h2 className="text-2xl font-bold text-slate-800 mb-8 text-center">Sample ESG Profiles</h2>
             <div className="grid md:grid-cols-3 gap-6 mb-8">
               {featuredCompanies.map((company) => (
                 <div

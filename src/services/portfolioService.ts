@@ -1,6 +1,7 @@
 import { PortfolioHolding, PortfolioESGAnalysis, ESGBenchmark, ESGData } from '../types/index';
-import { getUnifiedESGData } from './esgDataService';
+import { getUnifiedESGData, generateDemoESGData, UnifiedESGData } from './esgDataService';
 import { companies } from '../data/companies';
+import { tickerService } from './tickerService';
 
 // ESG Benchmark data
 export const ESG_BENCHMARKS: ESGBenchmark[] = [
@@ -74,7 +75,13 @@ const MOCK_ESG_DATA: Record<string, ESGData> = {
 
 export class PortfolioService {
   // Fetch ESG data for a single ticker
-  async fetchTickerESGData(ticker: string): Promise<{ esgData: ESGData | null; isLiveData: boolean; companyName?: string; sector?: string }> {
+  async fetchTickerESGData(ticker: string): Promise<{ 
+    esgData: ESGData | null; 
+    unifiedESGData: UnifiedESGData | null;
+    isLiveData: boolean; 
+    companyName?: string; 
+    sector?: string 
+  }> {
     try {
       // First try to find in our company database
       const company = companies.find(c => 
@@ -89,33 +96,79 @@ export class PortfolioService {
           socialScore: company.esgScores.social,
           governanceScore: company.esgScores.governance
         };
+        
+        // Create unified ESG data from company data
+        const unifiedESGData: UnifiedESGData = {
+          symbol: company.ticker,
+          companyName: company.name,
+          sector: company.sector,
+          esgScore: company.impactScore,
+          environmentScore: company.esgScores.environmental,
+          socialScore: company.esgScores.social,
+          governanceScore: company.esgScores.governance,
+          dataSource: 'prototype',
+          lastUpdated: company.lastUpdated,
+          prototypeData: {
+            logo: company.logo,
+            summary: company.summary,
+            controversies: company.controversies,
+            impactMetrics: {
+              carbonFootprint: Math.random() * 100,
+              waterUsage: Math.random() * 200000,
+              wasteGenerated: Math.random() * 50000,
+              renewableEnergyPercentage: Math.random() * 100,
+              employeeSatisfaction: Math.random() * 10,
+              diversityScore: Math.random() * 10,
+              boardIndependence: Math.random() * 100,
+              executivePayRatio: Math.random() * 2000,
+            }
+          }
+        };
+        
         return {
           esgData,
+          unifiedESGData,
           isLiveData: true,
           companyName: company.name,
           sector: company.sector
         };
       }
 
-      // Try live API data
-      try {
-        const liveData = await getUnifiedESGData(ticker);
-        if (liveData) {
-          const esgData: ESGData = {
-            overallScore: liveData.esgScore,
-            environmentalScore: liveData.environmentScore,
-            socialScore: liveData.socialScore,
-            governanceScore: liveData.governanceScore
-          };
-          return {
-            esgData,
-            isLiveData: liveData.dataSource === 'live',
-            companyName: liveData.companyName,
-            sector: liveData.sector
-          };
-        }
-      } catch (error) {
-        console.log(`Live API failed for ${ticker}, falling back to mock data`);
+      // Try live API data or prototype data
+      const unifiedData = await getUnifiedESGData(ticker);
+      if (unifiedData) {
+        const esgData: ESGData = {
+          overallScore: unifiedData.esgScore,
+          environmentalScore: unifiedData.environmentScore,
+          socialScore: unifiedData.socialScore,
+          governanceScore: unifiedData.governanceScore
+        };
+        return {
+          esgData,
+          unifiedESGData: unifiedData,
+          isLiveData: unifiedData.dataSource === 'live',
+          companyName: unifiedData.companyName,
+          sector: unifiedData.sector
+        };
+      }
+
+      // Check if ticker exists in our ticker service for demo data
+      const tickerInfo = tickerService.getTickerBySymbol(ticker);
+      if (tickerInfo) {
+        const demoData = generateDemoESGData(ticker, tickerInfo);
+        const esgData: ESGData = {
+          overallScore: demoData.esgScore,
+          environmentalScore: demoData.environmentScore,
+          socialScore: demoData.socialScore,
+          governanceScore: demoData.governanceScore
+        };
+        return {
+          esgData,
+          unifiedESGData: demoData,
+          isLiveData: false,
+          companyName: tickerInfo.name,
+          sector: 'Unknown'
+        };
       }
 
       // Fall back to mock data
@@ -123,15 +176,16 @@ export class PortfolioService {
       if (mockData) {
         return {
           esgData: mockData,
+          unifiedESGData: null,
           isLiveData: false,
           companyName: ticker.toUpperCase()
         };
       }
 
-      return { esgData: null, isLiveData: false };
+      return { esgData: null, unifiedESGData: null, isLiveData: false };
     } catch (error) {
       console.error(`Error fetching ESG data for ${ticker}:`, error);
-      return { esgData: null, isLiveData: false };
+      return { esgData: null, unifiedESGData: null, isLiveData: false };
     }
   }
 
@@ -232,6 +286,7 @@ export class PortfolioService {
       return {
         ...holding,
         esgData: result.esgData || undefined,
+        unifiedESGData: result.unifiedESGData || undefined,
         isLiveData: result.isLiveData,
         companyName: result.companyName,
         sector: result.sector

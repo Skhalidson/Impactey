@@ -8,12 +8,17 @@ import ComparePage from './components/ComparePage';
 import AIPage from './components/AIPage';
 import AlertsPage from './components/AlertsPage';
 import ESGExplorer from './components/ESGExplorer';
+import DataStatusPage from './components/DataStatusPage';
+import InstrumentDetailPage from './components/InstrumentDetailPage';
+import ErrorBoundary from './components/ErrorBoundary';
 import { findCompanyById } from './data/companies';
 import { Company } from './types/index';
+import { TickerData, tickerService } from './services/tickerService';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
   const [currentCompanyId, setCurrentCompanyId] = useState<string | null>(null);
+  const [currentTicker, setCurrentTicker] = useState<TickerData | null>(null);
   const [bookmarkedCompanies, setBookmarkedCompanies] = useState<string[]>([]);
 
   // Load bookmarks from localStorage on component mount
@@ -29,11 +34,19 @@ function App() {
     localStorage.setItem('impactey-bookmarks', JSON.stringify(bookmarkedCompanies));
   }, [bookmarkedCompanies]);
 
-  const handleNavigate = (page: string, companyId?: string) => {
+  const handleNavigate = (page: string, companyId?: string, ticker?: TickerData) => {
     setCurrentPage(page);
     if (companyId) {
       setCurrentCompanyId(companyId);
     }
+    if (ticker) {
+      setCurrentTicker(ticker);
+    }
+  };
+
+  const handleInstrumentNavigate = (ticker: TickerData) => {
+    setCurrentTicker(ticker);
+    setCurrentPage('instrument');
   };
 
   const handleBookmark = (companyId: string) => {
@@ -99,9 +112,27 @@ function App() {
           />
         );
       
+      case 'data-status':
+        return <DataStatusPage />;
+      
+      case 'instrument':
+        if (currentTicker) {
+          return (
+            <ErrorBoundary>
+              <InstrumentDetailPage
+                ticker={currentTicker}
+                onBack={() => setCurrentPage('home')}
+              />
+            </ErrorBoundary>
+          );
+        }
+        // If no ticker, redirect to home
+        setCurrentPage('home');
+        return <HomePage onNavigate={handleNavigate} onInstrumentSelect={handleInstrumentNavigate} />;
+      
       case 'home':
       default:
-        return <HomePage onNavigate={handleNavigate} />;
+        return <HomePage onNavigate={handleNavigate} onInstrumentSelect={handleInstrumentNavigate} />;
     }
   };
 

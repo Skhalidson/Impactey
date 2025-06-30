@@ -2,6 +2,8 @@ import React, { useState, useRef } from 'react';
 import { Upload, Plus, X, BarChart3, PieChart, AlertTriangle, CheckCircle, Loader, TrendingUp, TrendingDown } from 'lucide-react';
 import { PortfolioHolding, PortfolioESGAnalysis, ESGBenchmark } from '../types/index';
 import { portfolioService, ESG_BENCHMARKS } from '../services/portfolioService';
+import { useTickerSearch } from '../hooks/useTickerService';
+import DataStatusBanner, { DataSourceIndicator } from './DataStatusBanner';
 
 interface PortfolioPageProps {
   onNavigate: (page: string) => void;
@@ -14,7 +16,9 @@ const PortfolioPage: React.FC<PortfolioPageProps> = ({ onNavigate }) => {
   const [error, setError] = useState<string | null>(null);
   const [manualTicker, setManualTicker] = useState('');
   const [manualWeight, setManualWeight] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { search, results: tickerSuggestions, getTickerBySymbol } = useTickerSearch();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -107,6 +111,25 @@ const PortfolioPage: React.FC<PortfolioPageProps> = ({ onNavigate }) => {
     }
   };
 
+  const handleTickerInputChange = (value: string) => {
+    setManualTicker(value);
+    if (value.trim().length > 0) {
+      search(value, 10);
+      setShowSuggestions(true);
+    } else {
+      setShowSuggestions(false);
+    }
+  };
+
+  const selectTickerSuggestion = (ticker: string, name: string) => {
+    setManualTicker(ticker);
+    setShowSuggestions(false);
+  };
+
+  const validateTickerExists = (ticker: string): boolean => {
+    return getTickerBySymbol(ticker) !== null;
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-emerald-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -119,6 +142,9 @@ const PortfolioPage: React.FC<PortfolioPageProps> = ({ onNavigate }) => {
             Upload your portfolio or add tickers manually to analyze ESG performance and compare against benchmarks.
           </p>
         </div>
+
+        {/* Data Status Banner */}
+        <DataStatusBanner />
 
         {/* Input Section */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
@@ -147,13 +173,43 @@ const PortfolioPage: React.FC<PortfolioPageProps> = ({ onNavigate }) => {
             <div>
               <h3 className="text-lg font-semibold text-slate-800 mb-4">Add Ticker Manually</h3>
               <div className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Enter ticker (e.g., AAPL, TSLA)"
-                  value={manualTicker}
-                  onChange={(e) => setManualTicker(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Enter ticker or company name (e.g., AAPL, Apple)"
+                    value={manualTicker}
+                    onChange={(e) => handleTickerInputChange(e.target.value)}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                    onFocus={() => manualTicker.trim() && setShowSuggestions(true)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  />
+                  
+                  {/* Ticker Suggestions Dropdown */}
+                  {showSuggestions && tickerSuggestions.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      {tickerSuggestions.map((ticker, index) => (
+                        <button
+                          key={index}
+                          onClick={() => selectTickerSuggestion(ticker.symbol, ticker.name)}
+                          className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center justify-between border-b border-gray-100 last:border-b-0"
+                        >
+                          <div>
+                            <span className="font-medium text-gray-900">{ticker.symbol}</span>
+                            <span className="ml-2 text-sm text-gray-600 truncate">{ticker.name}</span>
+                          </div>
+                          <span className={`text-xs px-2 py-1 rounded ${
+                            ticker.type === 'stock' 
+                              ? 'bg-blue-100 text-blue-800' 
+                              : 'bg-green-100 text-green-800'
+                          }`}>
+                            {ticker.type.toUpperCase()}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
                 <input
                   type="number"
                   placeholder="Weight % (optional)"
@@ -161,6 +217,7 @@ const PortfolioPage: React.FC<PortfolioPageProps> = ({ onNavigate }) => {
                   onChange={(e) => setManualWeight(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                 />
+                
                 <button
                   onClick={addManualHolding}
                   disabled={!manualTicker.trim() || loading}
@@ -169,6 +226,14 @@ const PortfolioPage: React.FC<PortfolioPageProps> = ({ onNavigate }) => {
                   <Plus className="w-4 h-4" />
                   <span>Add to Portfolio</span>
                 </button>
+                
+                {/* Ticker validation message */}
+                {manualTicker.trim() && !validateTickerExists(manualTicker.toUpperCase()) && (
+                  <p className="text-sm text-orange-600 flex items-center space-x-1">
+                    <AlertTriangle className="w-4 h-4" />
+                    <span>Ticker not found in our database. It may still work with demo ESG data.</span>
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -185,39 +250,60 @@ const PortfolioPage: React.FC<PortfolioPageProps> = ({ onNavigate }) => {
                 </button>
               </div>
               <div className="grid gap-3 max-h-60 overflow-y-auto">
-                {holdings.map((holding, index) => (
-                  <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <span className="font-medium text-slate-800">{holding.ticker}</span>
-                      {holding.companyName && (
-                        <span className="text-sm text-slate-600">{holding.companyName}</span>
-                      )}
-                      {holding.weight && (
-                        <span className="text-sm text-slate-500">({holding.weight}%)</span>
-                      )}
-                      {!holding.isLiveData && (
-                        <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded">
-                          Mock Data
-                        </span>
-                      )}
-                      {holding.esgData ? (
-                        <span className={`text-xs px-2 py-1 rounded ${getScoreColor(holding.esgData.overallScore)}`}>
-                          ESG: {holding.esgData.overallScore.toFixed(1)}
-                        </span>
-                      ) : (
-                        <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
-                          No Data
-                        </span>
-                      )}
+                {holdings.map((holding, index) => {
+                  const tickerInfo = getTickerBySymbol(holding.ticker);
+                  return (
+                    <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                      <div className="flex items-center space-x-3 flex-wrap">
+                        <span className="font-medium text-slate-800">{holding.ticker}</span>
+                        
+                        {/* Asset Type Indicator */}
+                        {tickerInfo && (
+                          <span className={`text-xs px-2 py-1 rounded font-medium ${
+                            tickerInfo.type === 'stock' 
+                              ? 'bg-blue-100 text-blue-800' 
+                              : 'bg-green-100 text-green-800'
+                          }`}>
+                            {tickerInfo.type.toUpperCase()}
+                          </span>
+                        )}
+                        
+                        {holding.companyName && (
+                          <span className="text-sm text-slate-600 truncate max-w-48">{holding.companyName}</span>
+                        )}
+                        
+                        {holding.weight && (
+                          <span className="text-sm text-slate-500">({holding.weight}%)</span>
+                        )}
+                        
+                        {/* Data Source Indicator */}
+                        {holding.unifiedESGData && (
+                          <DataSourceIndicator 
+                            dataSource={holding.unifiedESGData.dataSource} 
+                            className="ml-1"
+                          />
+                        )}
+                        
+                        {/* ESG Score */}
+                        {holding.esgData ? (
+                          <span className={`text-xs px-2 py-1 rounded ${getScoreColor(holding.esgData.overallScore)}`}>
+                            ESG: {holding.esgData.overallScore.toFixed(1)}
+                          </span>
+                        ) : (
+                          <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
+                            No ESG Data
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => removeHolding(index)}
+                        className="text-red-500 hover:text-red-700 p-1 ml-2"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     </div>
-                    <button
-                      onClick={() => removeHolding(index)}
-                      className="text-red-500 hover:text-red-700 p-1"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
