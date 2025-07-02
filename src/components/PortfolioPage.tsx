@@ -1,9 +1,11 @@
-import React, { useState, useRef } from 'react';
-import { Upload, Plus, X, BarChart3, PieChart, AlertTriangle, CheckCircle, Loader, TrendingUp, TrendingDown } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, X, BarChart3, PieChart, AlertTriangle, CheckCircle, Loader, TrendingUp, TrendingDown } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { PortfolioHolding, PortfolioESGAnalysis, ESGBenchmark } from '../types/index';
 import { portfolioService, ESG_BENCHMARKS } from '../services/portfolioService';
 import { useTickerSearch } from '../hooks/useTickerService';
 import DataStatusBanner, { DataSourceIndicator } from './DataStatusBanner';
+import PortfolioOCRUpload from './PortfolioOCRUpload';
 
 interface PortfolioPageProps {
   onNavigate: (page: string) => void;
@@ -17,36 +19,7 @@ const PortfolioPage: React.FC<PortfolioPageProps> = ({ onNavigate }) => {
   const [manualTicker, setManualTicker] = useState('');
   const [manualWeight, setManualWeight] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const { search, results: tickerSuggestions, getTickerBySymbol } = useTickerSearch();
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const text = await file.text();
-      const parsedHoldings = portfolioService.parseCSV(text);
-      
-      if (parsedHoldings.length === 0) {
-        throw new Error('No valid tickers found in CSV file');
-      }
-
-      const holdingsWithData = await portfolioService.fetchPortfolioData(parsedHoldings);
-      setHoldings(holdingsWithData);
-      
-      const portfolioAnalysis = await portfolioService.analyzePortfolio(holdingsWithData);
-      setAnalysis(portfolioAnalysis);
-      
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to process CSV file');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const addManualHolding = async () => {
     if (!manualTicker.trim()) return;
@@ -106,9 +79,6 @@ const PortfolioPage: React.FC<PortfolioPageProps> = ({ onNavigate }) => {
     setHoldings([]);
     setAnalysis(null);
     setError(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
   };
 
   const handleTickerInputChange = (value: string) => {
@@ -130,6 +100,32 @@ const PortfolioPage: React.FC<PortfolioPageProps> = ({ onNavigate }) => {
     return getTickerBySymbol(ticker) !== null;
   };
 
+  const handleOCRHoldings = async (detectedHoldings: any[]) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Convert detected holdings to portfolio holdings format
+      const portfolioHoldings: PortfolioHolding[] = detectedHoldings.map(detected => ({
+        ticker: detected.ticker,
+        weight: detected.weight,
+        isLiveData: false
+      }));
+      
+      const holdingsWithData = await portfolioService.fetchPortfolioData(portfolioHoldings);
+      const updatedHoldings = [...holdings, ...holdingsWithData];
+      setHoldings(updatedHoldings);
+      
+      const portfolioAnalysis = await portfolioService.analyzePortfolio(updatedHoldings);
+      setAnalysis(portfolioAnalysis);
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to process OCR detected holdings');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-emerald-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -139,7 +135,7 @@ const PortfolioPage: React.FC<PortfolioPageProps> = ({ onNavigate }) => {
             Portfolio ESG Tracker
           </h1>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            Upload your portfolio or add tickers manually to analyze ESG performance and compare against benchmarks.
+            Add tickers manually or upload a portfolio screenshot to analyze ESG performance and compare against benchmarks.
           </p>
         </div>
 
@@ -147,30 +143,10 @@ const PortfolioPage: React.FC<PortfolioPageProps> = ({ onNavigate }) => {
         <DataStatusBanner />
 
         {/* Input Section */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* CSV Upload */}
-            <div>
-              <h3 className="text-lg font-semibold text-slate-800 mb-4">Upload CSV Portfolio</h3>
-              <div 
-                className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-emerald-400 transition-colors cursor-pointer"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm text-gray-600 mb-1">Click to upload CSV file</p>
-                <p className="text-xs text-gray-500">Include columns: ticker/symbol, weight/allocation (optional)</p>
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".csv"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-            </div>
-
+        <div className="space-y-8 mb-8">
+          <div className="grid lg:grid-cols-2 gap-6">
             {/* Manual Entry */}
-            <div>
+            <div className="bg-white rounded-xl shadow-lg p-6">
               <h3 className="text-lg font-semibold text-slate-800 mb-4">Add Ticker Manually</h3>
               <div className="space-y-4">
                 <div className="relative">
@@ -236,78 +212,84 @@ const PortfolioPage: React.FC<PortfolioPageProps> = ({ onNavigate }) => {
                 )}
               </div>
             </div>
-          </div>
 
-          {holdings.length > 0 && (
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <div className="flex justify-between items-center mb-4">
-                <h4 className="text-lg font-semibold text-slate-800">Portfolio Holdings ({holdings.length})</h4>
-                <button
-                  onClick={clearPortfolio}
-                  className="text-red-600 hover:text-red-700 text-sm font-medium"
-                >
-                  Clear All
-                </button>
-              </div>
-              <div className="grid gap-3 max-h-60 overflow-y-auto">
-                {holdings.map((holding, index) => {
-                  const tickerInfo = getTickerBySymbol(holding.ticker);
-                  return (
-                    <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-                      <div className="flex items-center space-x-3 flex-wrap">
-                        <span className="font-medium text-slate-800">{holding.ticker}</span>
-                        
-                        {/* Asset Type Indicator */}
-                        {tickerInfo && (
-                          <span className={`text-xs px-2 py-1 rounded font-medium ${
-                            tickerInfo.type === 'stock' 
-                              ? 'bg-blue-100 text-blue-800' 
-                              : 'bg-green-100 text-green-800'
-                          }`}>
-                            {tickerInfo.type.toUpperCase()}
-                          </span>
-                        )}
-                        
-                        {holding.companyName && (
-                          <span className="text-sm text-slate-600 truncate max-w-48">{holding.companyName}</span>
-                        )}
-                        
-                        {holding.weight && (
-                          <span className="text-sm text-slate-500">({holding.weight}%)</span>
-                        )}
-                        
-                        {/* Data Source Indicator */}
-                        {holding.unifiedESGData && (
-                          <DataSourceIndicator 
-                            dataSource={holding.unifiedESGData.dataSource} 
-                            className="ml-1"
-                          />
-                        )}
-                        
-                        {/* ESG Score */}
-                        {holding.esgData ? (
-                          <span className={`text-xs px-2 py-1 rounded ${getScoreColor(holding.esgData.overallScore)}`}>
-                            ESG: {holding.esgData.overallScore.toFixed(1)}
-                          </span>
-                        ) : (
-                          <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
-                            No ESG Data
-                          </span>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => removeHolding(index)}
-                        className="text-red-500 hover:text-red-700 p-1 ml-2"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
+            {/* OCR Upload */}
+            <div>
+              <PortfolioOCRUpload onHoldingsDetected={handleOCRHoldings} />
             </div>
-          )}
+          </div>
         </div>
+
+        {/* Holdings Summary */}
+        {holdings.length > 0 && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="text-lg font-semibold text-slate-800">Portfolio Holdings ({holdings.length})</h4>
+              <button
+                onClick={clearPortfolio}
+                className="text-red-600 hover:text-red-700 text-sm font-medium"
+              >
+                Clear All
+              </button>
+            </div>
+            <div className="grid gap-3 max-h-60 overflow-y-auto">
+              {holdings.map((holding, index) => {
+                const tickerInfo = getTickerBySymbol(holding.ticker);
+                return (
+                  <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                    <div className="flex items-center space-x-3 flex-wrap">
+                      <span className="font-medium text-slate-800">{holding.ticker}</span>
+                      
+                      {/* Asset Type Indicator */}
+                      {tickerInfo && (
+                        <span className={`text-xs px-2 py-1 rounded font-medium ${
+                          tickerInfo.type === 'stock' 
+                            ? 'bg-blue-100 text-blue-800' 
+                            : 'bg-green-100 text-green-800'
+                        }`}>
+                          {tickerInfo.type.toUpperCase()}
+                        </span>
+                      )}
+                      
+                      {holding.companyName && (
+                        <span className="text-sm text-slate-600 truncate max-w-48">{holding.companyName}</span>
+                      )}
+                      
+                      {holding.weight && (
+                        <span className="text-sm text-slate-500">({holding.weight}%)</span>
+                      )}
+                      
+                      {/* Data Source Indicator */}
+                      {holding.unifiedESGData && (
+                        <DataSourceIndicator 
+                          dataSource={holding.unifiedESGData.dataSource} 
+                          className="ml-1"
+                        />
+                      )}
+                      
+                      {/* ESG Score */}
+                      {holding.esgData ? (
+                        <span className={`text-xs px-2 py-1 rounded ${getScoreColor(holding.esgData.overallScore)}`}>
+                          ESG: {holding.esgData.overallScore.toFixed(1)}
+                        </span>
+                      ) : (
+                        <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
+                          No ESG Data
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => removeHolding(index)}
+                      className="text-red-500 hover:text-red-700 p-1 ml-2"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {loading && (
           <div className="text-center py-8">
@@ -328,75 +310,145 @@ const PortfolioPage: React.FC<PortfolioPageProps> = ({ onNavigate }) => {
 
         {analysis && (
           <>
-            {/* ESG Summary Cards */}
-            <div className="grid md:grid-cols-4 gap-6 mb-8">
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-slate-800">Overall ESG</h3>
-                  <BarChart3 className="w-6 h-6 text-emerald-600" />
-                </div>
-                <div className={`text-3xl font-bold mb-2 ${getScoreColor(analysis.totalScore).split(' ')[0]}`}>
-                  {analysis.totalScore.toFixed(1)}
-                </div>
-                <div className="text-sm text-slate-500">
-                  {analysis.coveragePercentage.toFixed(0)}% coverage
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-slate-800">Environmental</h3>
-                  <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center">
-                    <span className="text-emerald-600 text-xs font-bold">E</span>
-                  </div>
-                </div>
-                <div className={`text-3xl font-bold ${getScoreColor(analysis.environmentalScore).split(' ')[0]}`}>
-                  {analysis.environmentalScore.toFixed(1)}
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                  <div 
-                    className={`h-2 rounded-full ${getScoreColorBar(analysis.environmentalScore)}`}
-                    style={{ width: `${(analysis.environmentalScore / 10) * 100}%` }}
-                  ></div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-slate-800">Social</h3>
-                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-blue-600 text-xs font-bold">S</span>
-                  </div>
-                </div>
-                <div className={`text-3xl font-bold ${getScoreColor(analysis.socialScore).split(' ')[0]}`}>
-                  {analysis.socialScore.toFixed(1)}
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                  <div 
-                    className={`h-2 rounded-full ${getScoreColorBar(analysis.socialScore)}`}
-                    style={{ width: `${(analysis.socialScore / 10) * 100}%` }}
-                  ></div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-slate-800">Governance</h3>
-                  <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center">
-                    <span className="text-purple-600 text-xs font-bold">G</span>
-                  </div>
-                </div>
-                <div className={`text-3xl font-bold ${getScoreColor(analysis.governanceScore).split(' ')[0]}`}>
-                  {analysis.governanceScore.toFixed(1)}
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                  <div 
-                    className={`h-2 rounded-full ${getScoreColorBar(analysis.governanceScore)}`}
-                    style={{ width: `${(analysis.governanceScore / 10) * 100}%` }}
-                  ></div>
-                </div>
-              </div>
+                    {/* ESG Summary Cards */}
+        <motion.div 
+          className="grid md:grid-cols-4 gap-6 mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, staggerChildren: 0.1 }}
+        >
+          <motion.div 
+            className="bg-white rounded-xl shadow-lg p-6"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.1, duration: 0.5, type: "spring" as const }}
+            whileHover={{ y: -4, boxShadow: "0 20px 40px rgba(0, 0, 0, 0.1)" }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-slate-800">Overall ESG</h3>
+              <motion.div
+                initial={{ rotate: 0 }}
+                animate={{ rotate: 360 }}
+                transition={{ delay: 0.5, duration: 0.8, ease: "easeOut" }}
+              >
+                <BarChart3 className="w-6 h-6 text-emerald-600" />
+              </motion.div>
             </div>
+            <motion.div 
+              className={`text-3xl font-bold mb-2 ${getScoreColor(analysis.totalScore).split(' ')[0]}`}
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.7, duration: 0.5, type: "spring" as const, stiffness: 200 }}
+            >
+              {analysis.totalScore.toFixed(1)}
+            </motion.div>
+            <div className="text-sm text-slate-500">
+              {analysis.coveragePercentage.toFixed(0)}% coverage
+            </div>
+          </motion.div>
+
+          <motion.div 
+            className="bg-white rounded-xl shadow-lg p-6"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2, duration: 0.5, type: "spring" as const }}
+            whileHover={{ y: -4, boxShadow: "0 20px 40px rgba(0, 0, 0, 0.1)" }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-slate-800">Environmental</h3>
+              <motion.div 
+                className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center"
+                whileHover={{ scale: 1.1 }}
+              >
+                <span className="text-emerald-600 text-xs font-bold">E</span>
+              </motion.div>
+            </div>
+            <motion.div 
+              className={`text-3xl font-bold ${getScoreColor(analysis.environmentalScore).split(' ')[0]}`}
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.8, duration: 0.5, type: "spring" as const, stiffness: 200 }}
+            >
+              {analysis.environmentalScore.toFixed(1)}
+            </motion.div>
+            <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+              <motion.div 
+                className={`h-2 rounded-full ${getScoreColorBar(analysis.environmentalScore)}`}
+                initial={{ width: 0 }}
+                animate={{ width: `${(analysis.environmentalScore / 10) * 100}%` }}
+                transition={{ delay: 1.0, duration: 0.8, ease: "easeOut" }}
+              />
+            </div>
+          </motion.div>
+
+          <motion.div 
+            className="bg-white rounded-xl shadow-lg p-6"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3, duration: 0.5, type: "spring" as const }}
+            whileHover={{ y: -4, boxShadow: "0 20px 40px rgba(0, 0, 0, 0.1)" }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-slate-800">Social</h3>
+              <motion.div 
+                className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center"
+                whileHover={{ scale: 1.1 }}
+              >
+                <span className="text-blue-600 text-xs font-bold">S</span>
+              </motion.div>
+            </div>
+            <motion.div 
+              className={`text-3xl font-bold ${getScoreColor(analysis.socialScore).split(' ')[0]}`}
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.9, duration: 0.5, type: "spring" as const, stiffness: 200 }}
+            >
+              {analysis.socialScore.toFixed(1)}
+            </motion.div>
+            <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+              <motion.div 
+                className={`h-2 rounded-full ${getScoreColorBar(analysis.socialScore)}`}
+                initial={{ width: 0 }}
+                animate={{ width: `${(analysis.socialScore / 10) * 100}%` }}
+                transition={{ delay: 1.1, duration: 0.8, ease: "easeOut" }}
+              />
+            </div>
+          </motion.div>
+
+          <motion.div 
+            className="bg-white rounded-xl shadow-lg p-6"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.4, duration: 0.5, type: "spring" as const }}
+            whileHover={{ y: -4, boxShadow: "0 20px 40px rgba(0, 0, 0, 0.1)" }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-slate-800">Governance</h3>
+              <motion.div 
+                className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center"
+                whileHover={{ scale: 1.1 }}
+              >
+                <span className="text-purple-600 text-xs font-bold">G</span>
+              </motion.div>
+            </div>
+            <motion.div 
+              className={`text-3xl font-bold ${getScoreColor(analysis.governanceScore).split(' ')[0]}`}
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 1.0, duration: 0.5, type: "spring" as const, stiffness: 200 }}
+            >
+              {analysis.governanceScore.toFixed(1)}
+            </motion.div>
+            <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+              <motion.div 
+                className={`h-2 rounded-full ${getScoreColorBar(analysis.governanceScore)}`}
+                initial={{ width: 0 }}
+                animate={{ width: `${(analysis.governanceScore / 10) * 100}%` }}
+                transition={{ delay: 1.2, duration: 0.8, ease: "easeOut" }}
+              />
+            </div>
+          </motion.div>
+        </motion.div>
 
             {/* Benchmark Comparison */}
             <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
@@ -523,7 +575,7 @@ const PortfolioPage: React.FC<PortfolioPageProps> = ({ onNavigate }) => {
             <PieChart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-slate-700 mb-2">No Portfolio Data</h3>
             <p className="text-slate-500 max-w-md mx-auto">
-              Upload a CSV file with your holdings or manually add tickers to start analyzing your portfolio's ESG performance.
+              Add tickers manually or upload a portfolio screenshot to start analyzing your portfolio's ESG performance.
             </p>
           </div>
         )}

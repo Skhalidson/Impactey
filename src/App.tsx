@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Header from './components/Header';
 import HomePage from './components/HomePage';
 import CompanyPage from './components/CompanyPage';
@@ -6,10 +7,10 @@ import WatchlistPage from './components/WatchlistPage';
 import PortfolioPage from './components/PortfolioPage';
 import ComparePage from './components/ComparePage';
 import AIPage from './components/AIPage';
-import AlertsPage from './components/AlertsPage';
+import InsightsPage from './components/InsightsPage';
 import ESGExplorer from './components/ESGExplorer';
+import ExploreComparePage from './components/ExploreComparePage';
 import DataStatusPage from './components/DataStatusPage';
-import InstrumentDetailPage from './components/InstrumentDetailPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import { findCompanyById } from './data/companies';
 import { Company } from './types/index';
@@ -35,12 +36,16 @@ function App() {
   }, [bookmarkedCompanies]);
 
   const handleNavigate = (page: string, companyId?: string, ticker?: TickerData) => {
+    // Clear previous state when navigating
+    setCurrentTicker(null);
+    setCurrentCompanyId(null);
+    
     setCurrentPage(page);
-    if (companyId) {
-      setCurrentCompanyId(companyId);
-    }
+    
     if (ticker) {
       setCurrentTicker(ticker);
+    } else if (companyId) {
+      setCurrentCompanyId(companyId);
     }
   };
 
@@ -72,14 +77,23 @@ function App() {
   const renderCurrentPage = () => {
     switch (currentPage) {
       case 'company':
+        if (currentTicker) {
+          return (
+            <CompanyPage
+              ticker={currentTicker.symbol}
+              onNavigate={handleNavigate}
+              returnPath="home"
+            />
+          );
+        }
         if (currentCompanyId) {
           const company = findCompanyById(currentCompanyId);
           if (company) {
             return (
               <CompanyPage
-                company={company}
-                isBookmarked={bookmarkedCompanies.includes(company.id)}
-                onBookmark={handleBookmark}
+                ticker={company.ticker}
+                onNavigate={handleNavigate}
+                returnPath="explore-compare"
               />
             );
           }
@@ -94,11 +108,14 @@ function App() {
       case 'compare':
         return <ComparePage onNavigate={handleNavigate} />;
       
+      case 'explore-compare':
+        return <ExploreComparePage onNavigate={handleNavigate} />;
+      
       case 'ai':
         return <AIPage onNavigate={handleNavigate} />;
       
-      case 'alerts':
-        return <AlertsPage onNavigate={handleNavigate} />;
+      case 'insights':
+        return <InsightsPage onNavigate={handleNavigate} />;
       
       case 'explorer':
         return <ESGExplorer />;
@@ -117,13 +134,13 @@ function App() {
       
       case 'instrument':
         if (currentTicker) {
+          // Redirect instrument page to company page for unified experience
           return (
-            <ErrorBoundary>
-              <InstrumentDetailPage
-                ticker={currentTicker}
-                onBack={() => setCurrentPage('home')}
-              />
-            </ErrorBoundary>
+            <CompanyPage
+              ticker={currentTicker.symbol}
+              onNavigate={handleNavigate}
+              returnPath="home"
+            />
           );
         }
         // If no ticker, redirect to home
@@ -136,10 +153,33 @@ function App() {
     }
   };
 
+  const pageVariants = {
+    initial: { opacity: 0, x: 20 },
+    in: { opacity: 1, x: 0 },
+    out: { opacity: 0, x: -20 }
+  };
+
+  const pageTransition = {
+    type: "tween" as const,
+    ease: "easeInOut",
+    duration: 0.3
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Header currentPage={currentPage} onNavigate={handleNavigate} />
-      {renderCurrentPage()}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentPage + (currentTicker?.symbol || currentCompanyId || '')}
+          initial="initial"
+          animate="in"
+          exit="out"
+          variants={pageVariants}
+          transition={pageTransition}
+        >
+          {renderCurrentPage()}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }

@@ -2,9 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Search, X, Plus, TrendingUp, TrendingDown, Minus, BarChart3, Target, Zap } from 'lucide-react';
 import { Company } from '../types/index';
 import { companies, searchCompanies } from '../data/companies';
+import { TickerData, tickerService } from '../services/tickerService';
 
 interface ComparePageProps {
-  onNavigate: (page: string, companyId?: string) => void;
+  onNavigate: (page: string, companyId?: string, ticker?: TickerData) => void;
 }
 
 interface RadarChartProps {
@@ -402,7 +403,16 @@ const ComparePage: React.FC<ComparePageProps> = ({ onNavigate }) => {
                             <div>
                               <div className="font-medium text-slate-800">{company.name}</div>
                               <button
-                                onClick={() => onNavigate('company', company.id)}
+                                onClick={() => {
+                                  // Navigate to unified company page
+                                  const tickerData = tickerService.getTickerBySymbol(company.ticker);
+                                  if (tickerData) {
+                                    onNavigate('company', undefined, tickerData);
+                                  } else {
+                                    // Fallback to legacy company ID
+                                    onNavigate('company', company.id);
+                                  }
+                                }}
                                 className="text-sm text-emerald-600 hover:text-emerald-700"
                               >
                                 View Details →

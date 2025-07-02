@@ -5,6 +5,7 @@ interface TickerData {
   exchange: string;
   exchangeShortName: string;
   type: 'stock' | 'etf';
+  marketCap?: number;
 }
 
 interface TickerServiceState {
@@ -257,7 +258,114 @@ class TickerService {
   }
 
   /**
-   * Search for tickers by symbol or name
+   * Filter out unwanted exchanges and securities
+   */
+  private isMainstreamSecurity(ticker: TickerData): boolean {
+    // Major exchanges whitelist
+    const majorExchanges = [
+      'NASDAQ', 'NYSE', 'AMEX', 'BATS', 'NYSEArca',  // US
+      'LSE', 'LSE International',                      // UK
+      'XETRA', 'Frankfurt',                           // Germany
+      'TSE', 'TSX',                                   // Canada/Japan
+      'ASX',                                          // Australia
+      'Euronext', 'Euronext Paris', 'Euronext Amsterdam' // Europe
+    ];
+
+    // Exclude OTC, Pink Sheets, and microcap exchanges
+    const excludedExchanges = [
+      'OTC', 'OTCBB', 'PINK', 'PNK', 'OTCQX', 'OTCQB',
+      'GREY', 'GREYS', 'OTCGREY', 'OTCPINK',
+      '', 'Unknown', 'N/A'
+    ];
+
+    // Check exchange
+    if (excludedExchanges.includes(ticker.exchangeShortName)) {
+      return false;
+    }
+
+    // Only include major exchanges for strict filtering
+    if (!majorExchanges.includes(ticker.exchangeShortName)) {
+      return false;
+    }
+
+    // Price requirements
+    if (!ticker.price || ticker.price < 1.0) {
+      return false;
+    }
+
+    // Exclude exotic products by name/symbol patterns
+    const excludePatterns = [
+      /\b(2X|3X|-1X|inverse|ultra|yield|leverage|tracker|exploration|purpose|etc)\b/i,
+      /\b(bear|bull)\s*(2x|3x|ultra|inverse)/i,
+      /\b(short|long)\s*(2x|3x)/i,
+      /\b(daily|weekly|monthly)\s*(2x|3x)/i,
+      /\b(volatility|vix)\b/i,
+      /\b(commodity|futures|forward)\b/i,
+      /\b(currency|forex|fx)\b/i,
+      /\b(crypto|bitcoin|ethereum)\b/i
+    ];
+
+    const textToCheck = `${ticker.symbol} ${ticker.name}`.toLowerCase();
+    if (excludePatterns.some(pattern => pattern.test(textToCheck))) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Get priority score for sorting (higher = better)
+   */
+  private getPriorityScore(ticker: TickerData, query: string): number {
+    let score = 0;
+    const symbol = ticker.symbol.toLowerCase();
+    const name = ticker.name.toLowerCase();
+    const normalizedQuery = query.toLowerCase();
+
+    // Exact symbol match gets highest priority
+    if (symbol === normalizedQuery) score += 1000;
+
+    // Symbol starts with query
+    else if (symbol.startsWith(normalizedQuery)) score += 500;
+
+    // Name starts with query
+    else if (name.startsWith(normalizedQuery)) score += 100;
+
+    // Blue chip and major ETF bonus
+    const blueChips = [
+      'aapl', 'msft', 'googl', 'goog', 'amzn', 'tsla', 'meta', 'nvda', 'brk.b', 'brk.a',
+      'jpm', 'jnj', 'v', 'pg', 'unh', 'hd', 'ma', 'pfe', 'ko', 'dis',
+      'adbe', 'nflx', 'crm', 'nke', 'mrk', 'orcl', 'abbv', 'pes', 'cost',
+      'spy', 'qqq', 'vti', 'voo', 'iwm', 'eem', 'gld', 'tlt', 'hyg', 'lqd'
+    ];
+
+    if (blueChips.includes(symbol)) score += 200;
+
+    // S&P 500 and major index ETFs
+    const majorETFs = [
+      'spy', 'qqq', 'iwm', 'vti', 'voo', 'vea', 'vwo', 'eem', 'iefa', 'iemg',
+      'gld', 'slv', 'tlt', 'hyg', 'lqd', 'tip', 'vnq', 'xlk', 'xlf', 'xly'
+    ];
+
+    if (majorETFs.includes(symbol)) score += 150;
+
+    // Prefer major exchanges
+    const topExchanges = ['NASDAQ', 'NYSE', 'NYSEArca'];
+    if (topExchanges.includes(ticker.exchangeShortName)) score += 50;
+
+    // Prefer stocks over ETFs for general searches
+    if (ticker.type === 'stock') score += 10;
+
+    // Price bonus (higher price often indicates more established company)
+    if (ticker.price > 100) score += 20;
+    else if (ticker.price > 50) score += 10;
+    else if (ticker.price > 10) score += 5;
+
+    return score;
+  }
+
+  /**
+   * Search for tickers by symbol or name with mainstream filtering
    */
   searchTickers(query: string, limit: number = 50): TickerData[] {
     if (!query.trim()) return [];
@@ -272,9 +380,12 @@ class TickerService {
       return [];
     }
 
-    // Enhanced search: exact matches, starts with, and contains
-    const results = allTickers.filter(ticker => {
+    // Filter for mainstream securities and search relevance
+    const filteredResults = allTickers.filter(ticker => {
       if (!ticker.symbol || !ticker.name) return false;
+      
+      // Apply mainstream filtering
+      if (!this.isMainstreamSecurity(ticker)) return false;
       
       const symbol = ticker.symbol.toLowerCase();
       const name = ticker.name.toLowerCase();
@@ -285,45 +396,23 @@ class TickerService {
              name.split(' ').some(word => word.startsWith(normalizedQuery));
     });
 
-    // Sort by relevance: exact symbol match first, then symbol starts with, then name matches
-    results.sort((a, b) => {
-      if (!a.symbol || !a.name || !b.symbol || !b.name) return 0;
+    // Sort by priority score
+    filteredResults.sort((a, b) => {
+      const scoreA = this.getPriorityScore(a, normalizedQuery);
+      const scoreB = this.getPriorityScore(b, normalizedQuery);
       
-      const aSymbol = a.symbol.toLowerCase();
-      const bSymbol = b.symbol.toLowerCase();
-      const aName = a.name.toLowerCase();
-      const bName = b.name.toLowerCase();
-
-      // Exact symbol match gets highest priority
-      if (aSymbol === normalizedQuery && bSymbol !== normalizedQuery) return -1;
-      if (bSymbol === normalizedQuery && aSymbol !== normalizedQuery) return 1;
-
-      // Symbol starts with query
-      if (aSymbol.startsWith(normalizedQuery) && !bSymbol.startsWith(normalizedQuery)) return -1;
-      if (bSymbol.startsWith(normalizedQuery) && !aSymbol.startsWith(normalizedQuery)) return 1;
-
-      // Name starts with query
-      if (aName.startsWith(normalizedQuery) && !bName.startsWith(normalizedQuery)) return -1;
-      if (bName.startsWith(normalizedQuery) && !aName.startsWith(normalizedQuery)) return 1;
-
-      // Name contains query
-      if (aName.includes(normalizedQuery) && !bName.includes(normalizedQuery)) return -1;
-      if (bName.includes(normalizedQuery) && !aName.includes(normalizedQuery)) return 1;
-
-      // Prefer stocks over ETFs for equal matches
-      if (a.type === 'stock' && b.type === 'etf') return -1;
-      if (a.type === 'etf' && b.type === 'stock') return 1;
-
-      // Alphabetical by symbol
-      return aSymbol.localeCompare(bSymbol);
+      if (scoreA !== scoreB) return scoreB - scoreA;
+      
+      // Fallback to alphabetical
+      return a.symbol.localeCompare(b.symbol);
     });
 
-    const finalResults = results.slice(0, limit);
+    const finalResults = filteredResults.slice(0, limit);
 
     // Development logging
     if (import.meta.env.DEV && finalResults.length > 0) {
-      console.log(`🔍 Search "${query}" found ${results.length} results (showing ${finalResults.length}):`, 
-        finalResults.slice(0, 3).map(r => `${r.symbol} - ${r.name} (${r.type.toUpperCase()})`)
+      console.log(`🔍 Search "${query}" found ${filteredResults.length} mainstream results (showing ${finalResults.length}):`, 
+        finalResults.slice(0, 3).map(r => `${r.symbol} - ${r.name} (${r.type.toUpperCase()}, ${r.exchangeShortName}, $${r.price})`)
       );
     }
 
@@ -356,19 +445,49 @@ class TickerService {
   }
 
   /**
-   * Get data statistics
+   * Get filtered mainstream securities counts
+   */
+  getMainstreamCounts() {
+    const mainstreamStocks = this.state.stocks.filter(stock => this.isMainstreamSecurity(stock));
+    const mainstreamETFs = this.state.etfs.filter(etf => this.isMainstreamSecurity(etf));
+    
+    return {
+      stocks: mainstreamStocks.length,
+      etfs: mainstreamETFs.length,
+      total: mainstreamStocks.length + mainstreamETFs.length,
+      exchanges: {
+        stocks: [...new Set(mainstreamStocks.map(s => s.exchangeShortName))].length,
+        etfs: [...new Set(mainstreamETFs.map(e => e.exchangeShortName))].length
+      }
+    };
+  }
+
+  /**
+   * Get data statistics with both raw and filtered counts
    */
   getStats() {
+    const mainstream = this.getMainstreamCounts();
+    
     return {
+      // Raw counts (all data from API)
       totalStocks: this.state.stocks.length,
       totalETFs: this.state.etfs.length,
       totalInstruments: this.state.stocks.length + this.state.etfs.length,
+      
+      // Filtered mainstream counts (what users actually see in search)
+      mainstreamStocks: mainstream.stocks,
+      mainstreamETFs: mainstream.etfs,
+      mainstreamInstruments: mainstream.total,
+      
+      // Other stats
       lastFetched: this.state.lastFetched,
       isLoading: this.state.isLoading,
       error: this.state.error,
       exchanges: {
         stocks: [...new Set(this.state.stocks.map(s => s.exchangeShortName))].length,
-        etfs: [...new Set(this.state.etfs.map(e => e.exchangeShortName))].length
+        etfs: [...new Set(this.state.etfs.map(e => e.exchangeShortName))].length,
+        mainstreamStocks: mainstream.exchanges.stocks,
+        mainstreamETFs: mainstream.exchanges.etfs
       }
     };
   }

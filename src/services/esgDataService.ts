@@ -2,6 +2,7 @@ import { fetchESGScores, FMPESGScores } from '../api/esgApi';
 import { companies } from '../data/companies';
 import { Company } from '../types/index';
 import { tickerService } from './tickerService';
+import { esgCacheService } from './esgCacheService';
 
 // Enhanced ESG data interface that combines live and prototype data
 export interface UnifiedESGData {
@@ -36,12 +37,9 @@ export interface UnifiedESGData {
   };
 }
 
-// Cache for API responses to avoid repeated calls
-const apiCache = new Map<string, { data: FMPESGScores | null; timestamp: number }>();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-
 /**
  * Get unified ESG data for a company, combining live API data with prototype fallback
+ * Uses intelligent caching via esgCacheService for optimal performance
  * @param ticker - Company ticker symbol
  * @returns Promise<UnifiedESGData | null> - Combined ESG data or null if not found
  */
@@ -173,23 +171,14 @@ export function generateDemoESGData(ticker: string, tickerData: any): UnifiedESG
 }
 
 /**
- * Get live ESG data from API with caching
+ * Get live ESG data from API using intelligent caching
  * @param ticker - Company ticker symbol
  * @returns Promise<FMPESGScores | null> - Live ESG data or null
  */
 async function getLiveESGData(ticker: string): Promise<FMPESGScores | null> {
-  // Check cache first
-  const cached = apiCache.get(ticker);
-  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    return cached.data;
-  }
-  
   try {
+    // fetchESGScores now handles all caching internally via esgCacheService
     const data = await fetchESGScores(ticker);
-    
-    // Cache the result
-    apiCache.set(ticker, { data, timestamp: Date.now() });
-    
     return data;
   } catch (error) {
     console.warn(`Failed to fetch live ESG data for ${ticker}:`, error);
@@ -271,18 +260,20 @@ export async function getESGData(ticker: string): Promise<UnifiedESGData | null>
 }
 
 /**
- * Clear API cache
+ * Clear API cache (delegates to esgCacheService)
  */
-export function clearESGCache(): void {
-  apiCache.clear();
+export async function clearESGCache(): Promise<void> {
+  await esgCacheService.clearCache();
+  console.log('ESG cache cleared');
 }
 
 /**
- * Get cache statistics
+ * Get cache statistics (delegates to esgCacheService)
  */
-export function getCacheStats(): { size: number; entries: string[] } {
+export async function getCacheStats(): Promise<{ size: number; entries: string[] }> {
+  const stats = await esgCacheService.getCacheStats();
   return {
-    size: apiCache.size,
-    entries: Array.from(apiCache.keys())
+    size: stats.totalEntries,
+    entries: [] // Note: Entry enumeration not supported in new cache service for privacy
   };
 } 

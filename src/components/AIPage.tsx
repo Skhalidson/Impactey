@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Sparkles, MessageCircle, Lightbulb, Settings, Copy, RotateCcw, Loader } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { aiService, ChatMessage } from '../services/aiService';
 
 interface AIPageProps {
@@ -143,25 +144,65 @@ What would you like to know about ESG investing?`,
 
         <div className="grid lg:grid-cols-4 gap-6">
           {/* Suggested Questions Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-              <div className="flex items-center space-x-2 mb-4">
-                <Lightbulb className="w-5 h-5 text-emerald-600" />
+          <motion.div 
+            className="lg:col-span-1"
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          >
+            <motion.div 
+              className="bg-white rounded-xl shadow-lg p-6 mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+            >
+              <motion.div 
+                className="flex items-center space-x-2 mb-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4, duration: 0.4 }}
+              >
+                <motion.div
+                  animate={{ 
+                    rotate: [0, 10, -10, 0],
+                    scale: [1, 1.1, 1, 1.05, 1]
+                  }}
+                  transition={{ 
+                    duration: 2, 
+                    repeat: Infinity, 
+                    repeatDelay: 3,
+                    ease: "easeInOut" 
+                  }}
+                >
+                  <Lightbulb className="w-5 h-5 text-emerald-600" />
+                </motion.div>
                 <h3 className="font-semibold text-slate-800">Suggested Questions</h3>
-              </div>
+              </motion.div>
               <div className="space-y-2">
-                {suggestedQuestions.slice(0, 6).map((question, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleSendMessage(question)}
-                    disabled={isLoading}
-                    className="w-full text-left p-3 text-sm bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg transition-colors disabled:opacity-50"
-                  >
-                    {question}
-                  </button>
-                ))}
+                <AnimatePresence>
+                  {suggestedQuestions.slice(0, 6).map((question, index) => (
+                    <motion.button
+                      key={index}
+                      onClick={() => handleSendMessage(question)}
+                      disabled={isLoading}
+                      className="w-full text-left p-3 text-sm bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg transition-colors disabled:opacity-50"
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                      transition={{ delay: 0.5 + index * 0.1, duration: 0.3 }}
+                      whileHover={{ 
+                        scale: 1.02, 
+                        boxShadow: "0 4px 12px rgba(16, 185, 129, 0.15)",
+                        transition: { duration: 0.2 }
+                      }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      {question}
+                    </motion.button>
+                  ))}
+                </AnimatePresence>
               </div>
-            </div>
+            </motion.div>
 
             {/* Controls */}
             <div className="bg-white rounded-xl shadow-lg p-6">
@@ -206,7 +247,7 @@ What would you like to know about ESG investing?`,
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
 
           {/* Chat Interface */}
           <div className="lg:col-span-3">

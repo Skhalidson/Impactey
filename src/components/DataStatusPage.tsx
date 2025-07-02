@@ -198,6 +198,9 @@ const DataStatusPage: React.FC = () => {
               <Search className="w-12 h-12 mx-auto mb-3 text-slate-300" />
               <p>Start typing to search through {totalInstruments.toLocaleString()} live instruments</p>
               <p className="text-sm mt-1">Try searching for: AAPL, Tesla, Microsoft, SPY, or any company name</p>
+              <p className="text-xs mt-2 text-slate-400">
+                🛡️ Search shows only mainstream securities from major exchanges (no OTC, leveraged, or exotic products)
+              </p>
             </div>
           )}
         </div>

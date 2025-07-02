@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Bookmark, Home, Search, Briefcase, GitCompare, Sparkles, Bell, Database, Menu, X } from 'lucide-react';
+import { ArrowLeft, Bookmark, Home, Search, Briefcase, GitCompare, Sparkles, Lightbulb, Database, Menu, X } from 'lucide-react';
 import logo from '../assets/impactey-logo.png';
 import { motion } from 'framer-motion';
 
@@ -13,11 +13,10 @@ const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate }) => {
 
   const navigationItems = [
     { id: 'home', label: 'Home', icon: Home, description: 'Explore companies' },
-    { id: 'ai', label: 'Impactey AI', icon: Sparkles, description: 'AI-powered ESG insights' },
     { id: 'portfolio', label: 'Portfolio Tracker', icon: Briefcase, description: 'Track your portfolio ESG performance' },
-    { id: 'compare', label: 'Compare', icon: GitCompare, description: 'Compare companies side by side' },
-    { id: 'explorer', label: 'ESG Explorer', icon: Database, description: 'Discover and filter companies' },
-    { id: 'alerts', label: 'Alerts', icon: Bell, description: 'ESG monitoring and notifications', hasNotification: true },
+    { id: 'explore-compare', label: 'Explore & Compare', icon: Database, description: 'Discover ESG leaders and compare sustainability performance' },
+    { id: 'ai', label: 'Impactey AI', icon: Sparkles, description: 'AI-powered ESG insights' },
+    { id: 'insights', label: 'Insights', icon: Lightbulb, description: 'Learn about ESG principles and best practices' },
     { id: 'watchlist', label: 'Watchlist', icon: Bookmark, description: 'Your saved companies' },
   ];
 
@@ -92,14 +91,7 @@ const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate }) => {
                 >
                   <Icon className="w-4 h-4" />
                   <span className="font-sans">{item.label}</span>
-                  {item.hasNotification && (
-                    <span 
-                      className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center"
-                      aria-label="3 unread notifications"
-                    >
-                      3
-                    </span>
-                  )}
+
                 </button>
               );
             })}
@@ -147,14 +139,7 @@ const Header: React.FC<HeaderProps> = ({ currentPage, onNavigate }) => {
                         <span className="block font-sans text-base">{item.label}</span>
                         <span className="block text-xs text-slate-500 font-sans">{item.description}</span>
                       </div>
-                      {item.hasNotification && (
-                        <span 
-                          className="w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center flex-shrink-0"
-                          aria-label="3 unread notifications"
-                        >
-                          3
-                        </span>
-                      )}
+
                     </button>
                   );
                 })}

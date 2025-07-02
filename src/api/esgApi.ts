@@ -445,13 +445,29 @@ export async function fetchESGDataBySector(sector: string): Promise<ESGData[]> {
   }
 }
 
+import { esgCacheService } from '../services/esgCacheService';
+
 /**
- * Fetch ESG scores from FinancialModelingPrep API
+ * Fetch ESG scores from FinancialModelingPrep API with intelligent caching
  * @param ticker - Company ticker symbol (e.g., 'AAPL', 'MSFT')
  * @returns Promise<FMPESGScores | null> - ESG scores or null if fetch fails
  */
 export async function fetchESGScores(ticker: string): Promise<FMPESGScores | null> {
+  const normalizedTicker = ticker.toUpperCase();
+  
   try {
+    // First, try to get from cache
+    const cachedData = await esgCacheService.getESGData(normalizedTicker);
+    if (cachedData) {
+      return cachedData;
+    }
+
+    // Check rate limits before making API call
+    if (!esgCacheService.canMakeAPIRequest('esg')) {
+      console.warn(`Rate limit exceeded for ESG API, skipping ${normalizedTicker}`);
+      return null;
+    }
+
     const apiKey = import.meta.env.VITE_FMP_API_KEY;
     
     if (!apiKey) {
@@ -459,33 +475,41 @@ export async function fetchESGScores(ticker: string): Promise<FMPESGScores | nul
       return null;
     }
 
-    const url = `https://financialmodelingprep.com/api/v3/esg-environmental-social-governance/${ticker.toUpperCase()}?apikey=${apiKey}`;
+    console.log(`Fetching live ESG data for: ${normalizedTicker}`);
+    const url = `https://financialmodelingprep.com/api/v3/esg-environmental-social-governance/${normalizedTicker}?apikey=${apiKey}`;
     
     const response = await axios.get<FMPESGScores[]>(url, {
       timeout: 10000, // 10 second timeout
     });
 
     if (!response.data || response.data.length === 0) {
-      console.warn(`No ESG data found for ticker: ${ticker}`);
+      console.warn(`No ESG data found for ticker: ${normalizedTicker}`);
       return null;
     }
 
-    // Return the first object from the array as specified
-    return response.data[0];
+    // Get the first object from the array
+    const esgData = response.data[0];
+    
+    // Cache the successful response
+    await esgCacheService.setESGData(normalizedTicker, esgData);
+    
+    console.log(`Successfully fetched and cached ESG data for: ${normalizedTicker}`);
+    return esgData;
 
   } catch (error) {
     if (axios.isAxiosError(error)) {
       if (error.response?.status === 404) {
-        console.warn(`ESG data not found for ticker: ${ticker}`);
+        console.warn(`ESG data not found for ticker: ${normalizedTicker}`);
       } else if (error.response?.status === 401) {
         console.error('Invalid API key for FinancialModelingPrep');
       } else if (error.response?.status === 429) {
         console.error('API rate limit exceeded');
+        // Note: Rate limiting is also handled proactively by cache service
       } else {
-        console.error(`API request failed for ${ticker}:`, error.response?.statusText || error.message);
+        console.error(`API request failed for ${normalizedTicker}:`, error.response?.statusText || error.message);
       }
     } else {
-      console.error(`Unexpected error fetching ESG scores for ${ticker}:`, error);
+      console.error(`Unexpected error fetching ESG scores for ${normalizedTicker}:`, error);
     }
     
     return null;

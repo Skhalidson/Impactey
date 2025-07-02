@@ -8,6 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] - Development Branch
 
 ### Added
+- **OCR Portfolio Upload** - Extract holdings from portfolio screenshots using Tesseract.js
+  - Drag-and-drop image upload with format validation (PNG, JPG, etc.)
+  - Real-time OCR processing with progress indicators and debug logging
+  - Intelligent text parsing for ticker symbols, quantities, values, and percentages
+  - Editable holdings preview table with inline validation
+  - Fuzzy matching suggestions for invalid tickers
+  - Test button with sample data for feature validation
+  - Mobile-friendly interface with responsive design
+  - 10MB file size limit with comprehensive error handling
+  - Integration with existing Portfolio Tracker workflow
+  - Enhanced debugging information for troubleshooting OCR issues
+
+### Removed
+- **CSV Upload Functionality** - Simplified portfolio input to focus on manual entry and OCR upload only
+  - Removed CSV file upload option from Portfolio Tracker
+  - Updated UI layout to 2-column design (Manual Entry + OCR Upload)
+  - Streamlined user experience with fewer input options
+
 - **Live Ticker Data Integration** - Complete stock and ETF data from Financial Modeling Prep API
   - 98,641+ instruments (85,583 stocks + 13,058 ETFs) from global exchanges
   - 24-hour localStorage caching with intelligent cache management
@@ -69,11 +87,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Performance Optimization** - Debounced search and efficient filtering
 
 ### Dependencies Added
-- No new external dependencies (uses existing lucide-react icons)
+- **tesseract.js** - JavaScript OCR library for text extraction from images
 - Enhanced usage of existing React hooks and TypeScript features
 
 ### Files Added
 ```
+src/components/PortfolioOCRUpload.tsx # OCR portfolio screenshot upload
 src/services/tickerService.ts       # Core ticker data management
 src/hooks/useTickerService.ts       # React hooks for ticker integration
 src/components/InstrumentDetailPage.tsx # Individual stock/ETF pages

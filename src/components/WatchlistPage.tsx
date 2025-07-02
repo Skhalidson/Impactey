@@ -1,10 +1,11 @@
 import React from 'react';
 import { Bookmark, TrendingUp, AlertTriangle, Search, BookmarkX } from 'lucide-react';
 import { Company } from '../types/index';
+import { TickerData } from '../services/tickerService';
 
 interface WatchlistPageProps {
   savedCompanies: Company[];
-  onNavigate: (page: string, companyId?: string) => void;
+  onNavigate: (page: string, companyId?: string, ticker?: TickerData) => void;
   onRemoveBookmark: (companyId: string) => void;
 }
 
