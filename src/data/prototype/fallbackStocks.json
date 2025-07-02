@@ -1,0 +1,246 @@
+{
+  "stocks": [
+    {
+      "symbol": "AAPL",
+      "name": "Apple Inc.",
+      "price": 173.50,
+      "exchange": "NASDAQ Global Select",
+      "exchangeShortName": "NASDAQ",
+      "type": "stock"
+    },
+    {
+      "symbol": "MSFT",
+      "name": "Microsoft Corporation",
+      "price": 348.10,
+      "exchange": "NASDAQ Global Select",
+      "exchangeShortName": "NASDAQ",
+      "type": "stock"
+    },
+    {
+      "symbol": "GOOGL",
+      "name": "Alphabet Inc.",
+      "price": 135.25,
+      "exchange": "NASDAQ Global Select",
+      "exchangeShortName": "NASDAQ",
+      "type": "stock"
+    },
+    {
+      "symbol": "AMZN",
+      "name": "Amazon.com Inc.",
+      "price": 142.75,
+      "exchange": "NASDAQ Global Select",
+      "exchangeShortName": "NASDAQ",
+      "type": "stock"
+    },
+    {
+      "symbol": "TSLA",
+      "name": "Tesla, Inc.",
+      "price": 248.50,
+      "exchange": "NASDAQ Global Select",
+      "exchangeShortName": "NASDAQ",
+      "type": "stock"
+    },
+    {
+      "symbol": "META",
+      "name": "Meta Platforms, Inc.",
+      "price": 298.75,
+      "exchange": "NASDAQ Global Select",
+      "exchangeShortName": "NASDAQ",
+      "type": "stock"
+    },
+    {
+      "symbol": "NVDA",
+      "name": "NVIDIA Corporation",
+      "price": 875.30,
+      "exchange": "NASDAQ Global Select",
+      "exchangeShortName": "NASDAQ",
+      "type": "stock"
+    },
+    {
+      "symbol": "JPM",
+      "name": "JPMorgan Chase & Co.",
+      "price": 155.80,
+      "exchange": "New York Stock Exchange",
+      "exchangeShortName": "NYSE",
+      "type": "stock"
+    },
+    {
+      "symbol": "V",
+      "name": "Visa Inc.",
+      "price": 235.90,
+      "exchange": "New York Stock Exchange",
+      "exchangeShortName": "NYSE",
+      "type": "stock"
+    },
+    {
+      "symbol": "JNJ",
+      "name": "Johnson & Johnson",
+      "price": 161.25,
+      "exchange": "New York Stock Exchange",
+      "exchangeShortName": "NYSE",
+      "type": "stock"
+    },
+    {
+      "symbol": "WMT",
+      "name": "Walmart Inc.",
+      "price": 158.40,
+      "exchange": "New York Stock Exchange",
+      "exchangeShortName": "NYSE",
+      "type": "stock"
+    },
+    {
+      "symbol": "PG",
+      "name": "The Procter & Gamble Company",
+      "price": 152.75,
+      "exchange": "New York Stock Exchange",
+      "exchangeShortName": "NYSE",
+      "type": "stock"
+    },
+    {
+      "symbol": "UNH",
+      "name": "UnitedHealth Group Incorporated",
+      "price": 528.60,
+      "exchange": "New York Stock Exchange",
+      "exchangeShortName": "NYSE",
+      "type": "stock"
+    },
+    {
+      "symbol": "HD",
+      "name": "The Home Depot, Inc.",
+      "price": 345.20,
+      "exchange": "New York Stock Exchange",
+      "exchangeShortName": "NYSE",
+      "type": "stock"
+    },
+    {
+      "symbol": "MA",
+      "name": "Mastercard Incorporated",
+      "price": 398.50,
+      "exchange": "New York Stock Exchange",
+      "exchangeShortName": "NYSE",
+      "type": "stock"
+    },
+    {
+      "symbol": "DIS",
+      "name": "The Walt Disney Company",
+      "price": 98.75,
+      "exchange": "New York Stock Exchange",
+      "exchangeShortName": "NYSE",
+      "type": "stock"
+    },
+    {
+      "symbol": "ADBE",
+      "name": "Adobe Inc.",
+      "price": 545.80,
+      "exchange": "NASDAQ Global Select",
+      "exchangeShortName": "NASDAQ",
+      "type": "stock"
+    },
+    {
+      "symbol": "NFLX",
+      "name": "Netflix, Inc.",
+      "price": 425.60,
+      "exchange": "NASDAQ Global Select",
+      "exchangeShortName": "NASDAQ",
+      "type": "stock"
+    },
+    {
+      "symbol": "CRM",
+      "name": "Salesforce, Inc.",
+      "price": 218.90,
+      "exchange": "New York Stock Exchange",
+      "exchangeShortName": "NYSE",
+      "type": "stock"
+    },
+    {
+      "symbol": "PFE",
+      "name": "Pfizer Inc.",
+      "price": 29.85,
+      "exchange": "New York Stock Exchange",
+      "exchangeShortName": "NYSE",
+      "type": "stock"
+    }
+  ],
+  "etfs": [
+    {
+      "symbol": "SPY",
+      "name": "SPDR S&P 500 ETF Trust",
+      "price": 445.60,
+      "exchange": "NYSE Arca",
+      "exchangeShortName": "NYSE",
+      "type": "etf"
+    },
+    {
+      "symbol": "QQQ",
+      "name": "Invesco QQQ Trust",
+      "price": 375.25,
+      "exchange": "NASDAQ Global Market",
+      "exchangeShortName": "NASDAQ",
+      "type": "etf"
+    },
+    {
+      "symbol": "VTI",
+      "name": "Vanguard Total Stock Market ETF",
+      "price": 235.80,
+      "exchange": "NYSE Arca",
+      "exchangeShortName": "NYSE",
+      "type": "etf"
+    },
+    {
+      "symbol": "IWM",
+      "name": "iShares Russell 2000 ETF",
+      "price": 195.40,
+      "exchange": "NYSE Arca",
+      "exchangeShortName": "NYSE",
+      "type": "etf"
+    },
+    {
+      "symbol": "VEA",
+      "name": "Vanguard FTSE Developed Markets ETF",
+      "price": 48.75,
+      "exchange": "NYSE Arca",
+      "exchangeShortName": "NYSE",
+      "type": "etf"
+    },
+    {
+      "symbol": "VWO",
+      "name": "Vanguard FTSE Emerging Markets ETF",
+      "price": 42.80,
+      "exchange": "NYSE Arca",
+      "exchangeShortName": "NYSE",
+      "type": "etf"
+    },
+    {
+      "symbol": "BND",
+      "name": "Vanguard Total Bond Market ETF",
+      "price": 78.90,
+      "exchange": "NYSE Arca",
+      "exchangeShortName": "NYSE",
+      "type": "etf"
+    },
+    {
+      "symbol": "GLD",
+      "name": "SPDR Gold Shares",
+      "price": 185.25,
+      "exchange": "NYSE Arca",
+      "exchangeShortName": "NYSE",
+      "type": "etf"
+    },
+    {
+      "symbol": "VNQ",
+      "name": "Vanguard Real Estate ETF",
+      "price": 88.60,
+      "exchange": "NYSE Arca",
+      "exchangeShortName": "NYSE",
+      "type": "etf"
+    },
+    {
+      "symbol": "XLF",
+      "name": "Financial Select Sector SPDR Fund",
+      "price": 38.45,
+      "exchange": "NYSE Arca",
+      "exchangeShortName": "NYSE",
+      "type": "etf"
+    }
+  ]
+} 

@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTickerStats, useTickerSearch } from '../hooks/useTickerService';
 import { getUnifiedESGData, UnifiedESGData, generateDemoESGData } from '../services/esgDataService';
 import { tickerService, TickerData } from '../services/tickerService';
-import DataStatusBanner, { DataSourceIndicator } from './DataStatusBanner';
+import { DataSourceIndicator } from './common/DataStatusBanner';
+// import DataStatusBanner from './common/DataStatusBanner'; // Hidden for production
 import CacheStatusModal from './CacheStatusModal';
 import ESGNewsFeed from './ESGNewsFeed';
 
@@ -329,8 +330,8 @@ const ExploreComparePage: React.FC<ExploreComparePageProps> = ({ onNavigate }) =
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-emerald-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        {/* Data Status Banner */}
-        <DataStatusBanner />
+        {/* Data Status Banner - Hidden for production */}
+        {/* <DataStatusBanner /> */}
 
         {/* Header */}
         <div className="mb-8">
@@ -359,7 +360,7 @@ const ExploreComparePage: React.FC<ExploreComparePageProps> = ({ onNavigate }) =
 
           <div className="flex items-center space-x-4 text-sm text-slate-600">
             <span>📊 {filteredCompanies.length.toLocaleString()} companies</span>
-            <span>🔍 {mainstreamInstruments.toLocaleString()} instruments available</span>
+            <span>🔍 verified instruments available</span>
             {selectedCompanies.length > 0 && (
               <span className="text-emerald-600 font-medium">
                 {selectedCompanies.length} selected for comparison

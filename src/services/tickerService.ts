@@ -1,3 +1,6 @@
+import { fetchWithFallback, getAPIStatus, forceRetryAPI } from '../utils/apiErrorHandler';
+import fallbackStocks from '../data/prototype/fallbackStocks.json';
+
 interface TickerData {
   symbol: string;
   name: string;
@@ -116,19 +119,31 @@ class TickerService {
   }
 
   /**
-   * Fetch stock list from FMP API
+   * Fetch stock list from FMP API with fallback
    */
-  private async fetchStocks(): Promise<TickerData[]> {
-    const response = await fetch(
-      `https://financialmodelingprep.com/api/v3/stock/list?apikey=${this.API_KEY}`
-    );
-    
-    if (!response.ok) {
-      throw new Error(`Stock API request failed: ${response.status} ${response.statusText}`);
+  private async fetchStocks(): Promise<{ data: TickerData[]; source: 'api' | 'fallback' | 'error' }> {
+    const result = await fetchWithFallback<any[]>('FMP', {
+      url: `https://financialmodelingprep.com/api/v3/stock/list?apikey=${this.API_KEY}`,
+      fallbackData: fallbackStocks.stocks,
+      fetchFn: async () => {
+        const response = await fetch(
+          `https://financialmodelingprep.com/api/v3/stock/list?apikey=${this.API_KEY}`
+        );
+        
+        if (!response.ok) {
+          throw new Error(`Stock API request failed: ${response.status} ${response.statusText}`);
+        }
+        
+        return await response.json();
+      }
+    });
+
+    if (!result.data) {
+      return { data: [], source: 'error' };
     }
-    
-    const data = await response.json();
-    return data.map((stock: any) => ({
+
+    // Transform data to TickerData format
+    const transformedData = result.data.map((stock: any) => ({
       symbol: stock.symbol,
       name: stock.name,
       price: stock.price || 0,
@@ -136,22 +151,36 @@ class TickerService {
       exchangeShortName: stock.exchangeShortName || 'Unknown',
       type: 'stock' as const
     }));
+
+    return { data: transformedData, source: result.source };
   }
 
   /**
-   * Fetch ETF list from FMP API
+   * Fetch ETF list from FMP API with fallback
    */
-  private async fetchETFs(): Promise<TickerData[]> {
-    const response = await fetch(
-      `https://financialmodelingprep.com/api/v3/etf/list?apikey=${this.API_KEY}`
-    );
-    
-    if (!response.ok) {
-      throw new Error(`ETF API request failed: ${response.status} ${response.statusText}`);
+  private async fetchETFs(): Promise<{ data: TickerData[]; source: 'api' | 'fallback' | 'error' }> {
+    const result = await fetchWithFallback<any[]>('FMP', {
+      url: `https://financialmodelingprep.com/api/v3/etf/list?apikey=${this.API_KEY}`,
+      fallbackData: fallbackStocks.etfs,
+      fetchFn: async () => {
+        const response = await fetch(
+          `https://financialmodelingprep.com/api/v3/etf/list?apikey=${this.API_KEY}`
+        );
+        
+        if (!response.ok) {
+          throw new Error(`ETF API request failed: ${response.status} ${response.statusText}`);
+        }
+        
+        return await response.json();
+      }
+    });
+
+    if (!result.data) {
+      return { data: [], source: 'error' };
     }
-    
-    const data = await response.json();
-    return data.map((etf: any) => ({
+
+    // Transform data to TickerData format
+    const transformedData = result.data.map((etf: any) => ({
       symbol: etf.symbol,
       name: etf.name,
       price: etf.price || 0,
@@ -159,6 +188,8 @@ class TickerService {
       exchangeShortName: etf.exchangeShortName || 'Unknown',
       type: 'etf' as const
     }));
+
+    return { data: transformedData, source: result.source };
   }
 
   /**
@@ -179,14 +210,14 @@ class TickerService {
 
     try {
       // Fetch stocks and ETFs in parallel
-      const [stocks, etfs] = await Promise.all([
+      const [stockResult, etfResult] = await Promise.all([
         this.fetchStocks(),
         this.fetchETFs()
       ]);
 
-      // Update state
-      this.state.stocks = stocks;
-      this.state.etfs = etfs;
+      // Update state with the fetched data
+      this.state.stocks = stockResult.data;
+      this.state.etfs = etfResult.data;
       this.state.lastFetched = new Date();
       this.state.isLoading = false;
       this.state.error = null;
@@ -196,32 +227,44 @@ class TickerService {
 
       const fetchTime = Date.now() - startTime;
       
-      // Log results and warnings
+      // Log results and source information
       if (import.meta.env.DEV) {
         console.log('✅ Ticker data fetch completed:', {
-          stocks: stocks.length,
-          etfs: etfs.length,
-          total: stocks.length + etfs.length,
+          stocks: stockResult.data.length,
+          etfs: etfResult.data.length,
+          total: stockResult.data.length + etfResult.data.length,
           fetchTime: `${fetchTime}ms`,
           timestamp: this.state.lastFetched,
-          sampleStocks: stocks.slice(0, 5).map(s => `${s.symbol} - ${s.name}`),
-          sampleETFs: etfs.slice(0, 5).map(e => `${e.symbol} - ${e.name}`)
+          stockSource: stockResult.source,
+          etfSource: etfResult.source,
+          sampleStocks: stockResult.data.slice(0, 5).map((s: TickerData) => `${s.symbol} - ${s.name}`),
+          sampleETFs: etfResult.data.slice(0, 5).map((e: TickerData) => `${e.symbol} - ${e.name}`)
         });
       }
 
-      // Check for expected data volumes and show warnings
-      if (stocks.length < this.MIN_EXPECTED_STOCKS) {
-        const message = `⚠️ Low stock count: Expected ${this.MIN_EXPECTED_STOCKS}+, got ${stocks.length}`;
-        console.warn(message);
-        this.state.error = `Low data volume: ${stocks.length} stocks`;
+      // Show warnings if using fallback data
+      if (stockResult.source === 'fallback' || etfResult.source === 'fallback') {
+        const fallbackTypes = [];
+        if (stockResult.source === 'fallback') fallbackTypes.push('stocks');
+        if (etfResult.source === 'fallback') fallbackTypes.push('ETFs');
+        
+        this.state.error = `Using demo data for ${fallbackTypes.join(' and ')} due to API limits`;
+        console.warn(`⚠️ Using fallback data for: ${fallbackTypes.join(', ')}`);
       }
 
-      if (etfs.length < this.MIN_EXPECTED_ETFS) {
-        const message = `⚠️ Low ETF count: Expected ${this.MIN_EXPECTED_ETFS}+, got ${etfs.length}`;
+      // Check for expected data volumes (only for live data)
+      if (stockResult.source === 'api' && stockResult.data.length < this.MIN_EXPECTED_STOCKS) {
+        const message = `⚠️ Low stock count: Expected ${this.MIN_EXPECTED_STOCKS}+, got ${stockResult.data.length}`;
+        console.warn(message);
+        this.state.error = `Low data volume: ${stockResult.data.length} stocks`;
+      }
+
+      if (etfResult.source === 'api' && etfResult.data.length < this.MIN_EXPECTED_ETFS) {
+        const message = `⚠️ Low ETF count: Expected ${this.MIN_EXPECTED_ETFS}+, got ${etfResult.data.length}`;
         console.warn(message);
         this.state.error = this.state.error 
-          ? `${this.state.error}, ${etfs.length} ETFs`
-          : `Low data volume: ${etfs.length} ETFs`;
+          ? `${this.state.error}, ${etfResult.data.length} ETFs` 
+          : `Low data volume: ${etfResult.data.length} ETFs`;
       }
 
       this.notify();

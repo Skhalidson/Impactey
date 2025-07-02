@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Database, RefreshCw, Search, CheckCircle, AlertTriangle, Clock, TrendingUp, Globe } from 'lucide-react';
 import { useTickerStats, useTickerSearch } from '../hooks/useTickerService';
-import DataStatusBanner, { DataSourceIndicator } from './DataStatusBanner';
+import DataStatusBanner, { DataSourceIndicator } from './common/DataStatusBanner';
 
 const DataStatusPage: React.FC = () => {
   const { 

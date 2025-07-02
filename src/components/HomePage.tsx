@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { Search, TrendingUp, Shield, Leaf, Users, ChevronDown, ChevronUp, ChevronRight, Target, BarChart3, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, TrendingUp, Shield, Leaf, Users, ChevronDown, ChevronUp, ChevronRight, Target, BarChart3, AlertTriangle, Star, ArrowRight, Database, RefreshCw } from 'lucide-react';
 import { searchCompanies, companies } from '../data/companies';
 import { Company } from '../types/index';
 import { useTickerStats, useTickerSearch } from '../hooks/useTickerService';
 import { TickerData, tickerService } from '../services/tickerService';
-import DataStatusBanner from './DataStatusBanner';
-import { motion } from 'framer-motion';
+// import DataStatusBanner from './common/DataStatusBanner'; // Hidden for production
+import ApiNotificationBanner, { ApiNotification } from './common/ApiNotificationBanner';
+import { getAPIStatus, forceRetryAPI } from '../utils/apiErrorHandler';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface HomePageProps {
   onNavigate: (page: string, companyId?: string, ticker?: TickerData) => void;
@@ -20,6 +22,9 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, onInstrumentSelect }) =
   const [liveSearchQuery, setLiveSearchQuery] = useState('');
   const [showLiveSearch, setShowLiveSearch] = useState(false);
   
+  // API notification state
+  const [apiNotification, setApiNotification] = useState<ApiNotification | null>(null);
+  
   // Live ticker data and search functionality
   const { 
     totalStocks, 
@@ -32,6 +37,34 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, onInstrumentSelect }) =
     error 
   } = useTickerStats();
   const { search: searchLiveTickers, results: liveResults, isSearching, searchError } = useTickerSearch();
+
+  // Check for API status and display notifications
+  useEffect(() => {
+    const fmpStatus = getAPIStatus('FMP');
+    if (fmpStatus.isFallbackActive && !apiNotification) {
+      setApiNotification({
+        type: 'warning',
+        title: 'Live Data Temporarily Unavailable',
+        message: 'Financial Modeling Prep API rate limit reached. Showing demo data for stock and ETF search.',
+        showRetry: true,
+        apiName: 'FMP',
+        source: 'fallback'
+      });
+    }
+  }, [error, apiNotification]);
+
+  // Retry function for API failures
+  const handleRetry = () => {
+    forceRetryAPI('FMP');
+    setApiNotification(null);
+    // Refresh ticker data
+    tickerService.refreshData();
+  };
+
+  // Dismiss notification
+  const handleDismissNotification = () => {
+    setApiNotification(null);
+  };
 
   // Enhanced search handler with debouncing logic
   const handleLiveSearch = (query: string) => {
@@ -176,7 +209,8 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, onInstrumentSelect }) =
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-20">
         
-        {/* Data Status Banner */}
+        {/* Data Status Banner - Hidden for production */}
+        {/* 
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -184,6 +218,23 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, onInstrumentSelect }) =
         >
           <DataStatusBanner />
         </motion.div>
+        */}
+        
+        {/* API Notification Banner */}
+        {apiNotification && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="mb-6"
+          >
+            <ApiNotificationBanner
+              notification={apiNotification}
+              onRetry={handleRetry}
+              onDismiss={handleDismissNotification}
+            />
+          </motion.div>
+        )}
         
         <motion.div 
           className="text-center max-w-4xl mx-auto"
@@ -253,7 +304,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate, onInstrumentSelect }) =
                 </p>
               ) : (
                 <p className="text-slate-600">
-                  Search through {mainstreamInstruments.toLocaleString()} verified stocks and ETFs from global exchanges
+                  Search through verified stocks and ETFs from global exchanges
                   {error && (
                     <span className="text-amber-600 text-sm block mt-1">
                       ⚠️ Some data may be incomplete

@@ -1,0 +1,124 @@
+{
+  "articles": [
+    {
+      "title": "Global ESG Funds See Record Inflows Despite Market Volatility",
+      "description": "Environmental, social, and governance (ESG) funds attracted $150 billion in new investments during Q4, demonstrating continued investor appetite for sustainable investing options.",
+      "content": "Despite challenging market conditions, ESG funds continue to attract significant capital flows as institutional and retail investors prioritize sustainability...",
+      "url": "https://example.com/esg-funds-record-inflows",
+      "image": "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=400",
+      "publishedAt": "2024-01-15T08:30:00Z",
+      "source": {
+        "name": "ESG Today",
+        "url": "https://esgtoday.com"
+      }
+    },
+    {
+      "title": "New EU Corporate Sustainability Reporting Directive Takes Effect",
+      "description": "The CSRD introduces mandatory sustainability reporting for companies across the EU, significantly expanding disclosure requirements for ESG metrics.",
+      "content": "The Corporate Sustainability Reporting Directive (CSRD) represents a major shift in how European companies must report on sustainability...",
+      "url": "https://example.com/eu-csrd-takes-effect",
+      "image": "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=400",
+      "publishedAt": "2024-01-14T14:20:00Z",
+      "source": {
+        "name": "Sustainable Finance Daily",
+        "url": "https://sustainablefinance.com"
+      }
+    },
+    {
+      "title": "Tech Giants Accelerate Net Zero Commitments Amid Climate Pressure",
+      "description": "Major technology companies are advancing their carbon neutrality goals, with several announcing new renewable energy partnerships and efficiency initiatives.",
+      "content": "Leading technology companies including Microsoft, Google, and Apple are accelerating their net zero commitments through strategic partnerships...",
+      "url": "https://example.com/tech-giants-net-zero",
+      "image": "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=400",
+      "publishedAt": "2024-01-13T11:45:00Z",
+      "source": {
+        "name": "CleanTech Report",
+        "url": "https://cleantechreport.com"
+      }
+    },
+    {
+      "title": "ESG Rating Agencies Face New Regulatory Scrutiny",
+      "description": "Financial regulators are increasing oversight of ESG rating providers following concerns about methodology transparency and potential conflicts of interest.",
+      "content": "Regulatory bodies worldwide are implementing new frameworks to oversee ESG rating agencies, addressing growing concerns about rating consistency...",
+      "url": "https://example.com/esg-rating-scrutiny",
+      "image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
+      "publishedAt": "2024-01-12T16:15:00Z",
+      "source": {
+        "name": "Financial Regulation Today",
+        "url": "https://finregtoday.com"
+      }
+    },
+    {
+      "title": "Renewable Energy Investment Reaches All-Time High in 2024",
+      "description": "Global renewable energy investments surpassed $1.5 trillion in 2024, driven by falling costs and supportive government policies worldwide.",
+      "content": "The renewable energy sector experienced unprecedented investment growth in 2024, with solar and wind projects leading the surge...",
+      "url": "https://example.com/renewable-investment-high",
+      "image": "https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=400",
+      "publishedAt": "2024-01-11T09:30:00Z",
+      "source": {
+        "name": "Energy Transition News",
+        "url": "https://energytransition.com"
+      }
+    },
+    {
+      "title": "Supply Chain Transparency Becomes Key ESG Focus for Investors",
+      "description": "Institutional investors are increasingly demanding comprehensive supply chain disclosure as part of their ESG evaluation criteria.",
+      "content": "Major investment firms are enhancing their due diligence processes to include detailed supply chain analysis, particularly focusing on labor practices...",
+      "url": "https://example.com/supply-chain-transparency",
+      "image": "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400",
+      "publishedAt": "2024-01-10T13:20:00Z",
+      "source": {
+        "name": "Investment Weekly",
+        "url": "https://investmentweekly.com"
+      }
+    },
+    {
+      "title": "Green Bonds Market Expands to Emerging Economies",
+      "description": "Developing countries are increasingly accessing green bond markets to finance climate adaptation and mitigation projects.",
+      "content": "The green bonds market is experiencing significant expansion into emerging economies, with several countries issuing sovereign green bonds...",
+      "url": "https://example.com/green-bonds-emerging",
+      "image": "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=400",
+      "publishedAt": "2024-01-09T10:45:00Z",
+      "source": {
+        "name": "Bond Market Intelligence",
+        "url": "https://bondmarket.com"
+      }
+    },
+    {
+      "title": "Corporate Diversity Programs Show Measurable Progress",
+      "description": "New research indicates that companies with comprehensive diversity, equity, and inclusion programs are outperforming peers across multiple metrics.",
+      "content": "A comprehensive study of Fortune 500 companies reveals that robust DEI programs correlate with improved financial performance and employee satisfaction...",
+      "url": "https://example.com/diversity-programs-progress",
+      "image": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400",
+      "publishedAt": "2024-01-08T15:10:00Z",
+      "source": {
+        "name": "Corporate Governance Review",
+        "url": "https://corpgov.com"
+      }
+    },
+    {
+      "title": "Sustainable Agriculture Technology Attracts Major Investment",
+      "description": "AgTech startups focusing on sustainable farming practices received $8 billion in funding, highlighting growing interest in climate-smart agriculture.",
+      "content": "Investment in agricultural technology companies is surging, with a particular focus on solutions that reduce environmental impact while increasing yields...",
+      "url": "https://example.com/sustainable-agtech-investment",
+      "image": "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400",
+      "publishedAt": "2024-01-07T12:00:00Z",
+      "source": {
+        "name": "AgTech Today",
+        "url": "https://agtechtoday.com"
+      }
+    },
+    {
+      "title": "Climate Risk Assessment Becomes Mandatory for Major Banks",
+      "description": "New regulations require large financial institutions to conduct comprehensive climate risk assessments and disclose potential impacts to their portfolios.",
+      "content": "Banking regulators worldwide are implementing new climate risk assessment requirements, forcing financial institutions to quantify climate-related risks...",
+      "url": "https://example.com/climate-risk-banks",
+      "image": "https://images.unsplash.com/photo-1541354329998-f4d9a9f9297f?w=400",
+      "publishedAt": "2024-01-06T14:30:00Z",
+      "source": {
+        "name": "Banking Risk Journal",
+        "url": "https://bankingrisk.com"
+      }
+    }
+  ]
+} 

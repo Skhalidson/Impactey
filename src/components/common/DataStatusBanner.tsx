@@ -1,6 +1,6 @@
 import React from 'react';
 import { AlertTriangle, Database, RefreshCw, CheckCircle, Clock } from 'lucide-react';
-import { useTickerStats } from '../hooks/useTickerService';
+import { useTickerStats } from '../../hooks/useTickerService';
 
 const DataStatusBanner: React.FC = () => {
   const { 

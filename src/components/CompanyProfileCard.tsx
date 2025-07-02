@@ -2,7 +2,8 @@ import React from 'react';
 import { Building, Globe, DollarSign, BarChart3, MapPin } from 'lucide-react';
 import { UnifiedESGData } from '../services/esgDataService';
 import { TickerData } from '../services/tickerService';
-import { DataSourceIndicator } from './DataStatusBanner';
+import { DataSourceIndicator } from './common/DataStatusBanner';
+import { motion } from 'framer-motion';
 
 interface CompanyProfileCardProps {
   companyData: UnifiedESGData;

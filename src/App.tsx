@@ -11,7 +11,7 @@ import InsightsPage from './components/InsightsPage';
 import ESGExplorer from './components/ESGExplorer';
 import ExploreComparePage from './components/ExploreComparePage';
 import DataStatusPage from './components/DataStatusPage';
-import ErrorBoundary from './components/ErrorBoundary';
+import ErrorBoundary from './components/common/ErrorBoundary';
 import { findCompanyById } from './data/companies';
 import { Company } from './types/index';
 import { TickerData, tickerService } from './services/tickerService';

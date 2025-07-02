@@ -4,7 +4,8 @@ import { motion } from 'framer-motion';
 import { PortfolioHolding, PortfolioESGAnalysis, ESGBenchmark } from '../types/index';
 import { portfolioService, ESG_BENCHMARKS } from '../services/portfolioService';
 import { useTickerSearch } from '../hooks/useTickerService';
-import DataStatusBanner, { DataSourceIndicator } from './DataStatusBanner';
+import { DataSourceIndicator } from './common/DataStatusBanner';
+// import DataStatusBanner from './common/DataStatusBanner'; // Hidden for production
 import PortfolioOCRUpload from './PortfolioOCRUpload';
 
 interface PortfolioPageProps {
@@ -139,8 +140,8 @@ const PortfolioPage: React.FC<PortfolioPageProps> = ({ onNavigate }) => {
           </p>
         </div>
 
-        {/* Data Status Banner */}
-        <DataStatusBanner />
+        {/* Data Status Banner - Hidden for production */}
+        {/* <DataStatusBanner /> */}
 
         {/* Input Section */}
         <div className="space-y-8 mb-8">

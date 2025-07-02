@@ -96,7 +96,7 @@ const ESGExplorer: React.FC = () => {
 
   // Filter and sort companies
   const filteredAndSortedCompanies = useMemo(() => {
-    let filtered = companiesWithData.filter(company => {
+    const filtered = companiesWithData.filter(company => {
       const matchesSearch = company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            company.ticker.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesSector = !filters.sector || company.sector === filters.sector;

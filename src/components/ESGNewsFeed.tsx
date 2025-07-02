@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 import { NewsArticle, fetchCompanyESGNews, fetchGeneralESGNews, fetchRecentESGNews } from '../api/newsApi';
 import { generateBatchSummaries, AISummary, isAIConfigured } from '../services/aiSummaryService';
+import ApiNotificationBanner, { ApiNotification } from './common/ApiNotificationBanner';
+import { getAPIStatus, forceRetryAPI } from '../utils/apiErrorHandler';
 import { 
   analyzeControversy, 
   batchAnalyzeControversies, 
@@ -61,19 +63,21 @@ const ESGNewsFeed: React.FC<ESGNewsFeedProps> = ({
   const [showFiltersPanel, setShowFiltersPanel] = useState(false);
   const [dateRange, setDateRange] = useState<number>(7); // days
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+  const [apiNotification, setApiNotification] = useState<ApiNotification | null>(null);
 
   // Fetch news data
   const fetchNews = async () => {
     setIsLoading(true);
     setError(null);
+    setApiNotification(null);
     
     try {
-      let articles: NewsArticle[] = [];
+      let result: { data: NewsArticle[]; source: 'api' | 'fallback' | 'error'; notification?: any };
       
       if (companyName || ticker) {
         // Fetch company-specific ESG news
         console.log(`Fetching ESG news for company: ${companyName || ticker}`);
-        articles = await fetchCompanyESGNews(
+        result = await fetchCompanyESGNews(
           companyName || ticker || '', 
           ticker, 
           maxArticles
@@ -81,25 +85,30 @@ const ESGNewsFeed: React.FC<ESGNewsFeedProps> = ({
       } else {
         // Fetch general ESG news
         console.log('Fetching general ESG news');
-        articles = await fetchGeneralESGNews(maxArticles);
+        result = await fetchGeneralESGNews(maxArticles);
       }
 
-      if (articles.length === 0) {
+      // Handle API notification
+      if (result.notification) {
+        setApiNotification(result.notification);
+      }
+
+      if (result.data.length === 0) {
         setError('No ESG news found for this search. Try adjusting your filters or check back later.');
         setNewsItems([]);
         return;
       }
 
-      console.log(`Fetched ${articles.length} articles, generating summaries and analyzing controversies...`);
+      console.log(`Fetched ${result.data.length} articles (source: ${result.source}), generating summaries and analyzing controversies...`);
 
       // Generate AI summaries and analyze controversies in parallel
       const [summaries, controversies] = await Promise.all([
-        generateBatchSummaries(articles),
-        Promise.resolve(batchAnalyzeControversies(articles))
+        generateBatchSummaries(result.data),
+        Promise.resolve(batchAnalyzeControversies(result.data))
       ]);
 
       // Combine all data
-      const items: NewsItem[] = articles.map((article, index) => ({
+      const items: NewsItem[] = result.data.map((article, index) => ({
         article,
         summary: summaries[index],
         controversy: controversies[index]
@@ -116,6 +125,18 @@ const ESGNewsFeed: React.FC<ESGNewsFeedProps> = ({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Retry function for API failures
+  const handleRetry = () => {
+    forceRetryAPI('GNews');
+    setApiNotification(null);
+    fetchNews();
+  };
+
+  // Dismiss notification
+  const handleDismissNotification = () => {
+    setApiNotification(null);
   };
 
   // Initial fetch
@@ -353,6 +374,17 @@ const ESGNewsFeed: React.FC<ESGNewsFeedProps> = ({
           </div>
         )}
       </div>
+
+      {/* API Notification Banner */}
+      {apiNotification && (
+        <div className="px-6">
+          <ApiNotificationBanner
+            notification={apiNotification}
+            onRetry={handleRetry}
+            onDismiss={handleDismissNotification}
+          />
+        </div>
+      )}
 
       {/* News Articles */}
       <div className="p-6">
