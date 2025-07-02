@@ -14,7 +14,7 @@ import DataStatusPage from './components/DataStatusPage';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import { findCompanyById } from './data/companies';
 import { Company } from './types/index';
-import { TickerData, tickerService } from './services/tickerService';
+import { TickerData } from './services/tickerService';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -24,15 +24,23 @@ function App() {
 
   // Load bookmarks from localStorage on component mount
   useEffect(() => {
-    const savedBookmarks = localStorage.getItem('impactey-bookmarks');
-    if (savedBookmarks) {
-      setBookmarkedCompanies(JSON.parse(savedBookmarks));
+    try {
+      const savedBookmarks = localStorage.getItem('impactey-bookmarks');
+      if (savedBookmarks) {
+        setBookmarkedCompanies(JSON.parse(savedBookmarks));
+      }
+    } catch (error) {
+      console.warn('Failed to load bookmarks:', error);
     }
   }, []);
 
   // Save bookmarks to localStorage whenever bookmarks change
   useEffect(() => {
-    localStorage.setItem('impactey-bookmarks', JSON.stringify(bookmarkedCompanies));
+    try {
+      localStorage.setItem('impactey-bookmarks', JSON.stringify(bookmarkedCompanies));
+    } catch (error) {
+      console.warn('Failed to save bookmarks:', error);
+    }
   }, [bookmarkedCompanies]);
 
   const handleNavigate = (page: string, companyId?: string, ticker?: TickerData) => {
@@ -54,16 +62,6 @@ function App() {
     setCurrentPage('instrument');
   };
 
-  const handleBookmark = (companyId: string) => {
-    setBookmarkedCompanies(prev => {
-      if (prev.includes(companyId)) {
-        return prev.filter(id => id !== companyId);
-      } else {
-        return [...prev, companyId];
-      }
-    });
-  };
-
   const handleRemoveBookmark = (companyId: string) => {
     setBookmarkedCompanies(prev => prev.filter(id => id !== companyId));
   };
@@ -75,81 +73,86 @@ function App() {
   };
 
   const renderCurrentPage = () => {
-    switch (currentPage) {
-      case 'company':
-        if (currentTicker) {
-          return (
-            <CompanyPage
-              ticker={currentTicker.symbol}
-              onNavigate={handleNavigate}
-              returnPath="home"
-            />
-          );
-        }
-        if (currentCompanyId) {
-          const company = findCompanyById(currentCompanyId);
-          if (company) {
+    try {
+      switch (currentPage) {
+        case 'company':
+          if (currentTicker) {
             return (
               <CompanyPage
-                ticker={company.ticker}
+                ticker={currentTicker.symbol}
                 onNavigate={handleNavigate}
-                returnPath="explore-compare"
+                returnPath="home"
               />
             );
           }
-        }
-        // If no company found, redirect to home
-        setCurrentPage('home');
-        return <HomePage onNavigate={handleNavigate} />;
-      
-      case 'portfolio':
-        return <PortfolioPage onNavigate={handleNavigate} />;
-      
-      case 'compare':
-        return <ComparePage onNavigate={handleNavigate} />;
-      
-      case 'explore-compare':
-        return <ExploreComparePage onNavigate={handleNavigate} />;
-      
-      case 'ai':
-        return <AIPage onNavigate={handleNavigate} />;
-      
-      case 'insights':
-        return <InsightsPage onNavigate={handleNavigate} />;
-      
-      case 'explorer':
-        return <ESGExplorer />;
-      
-      case 'watchlist':
-        return (
-          <WatchlistPage
-            savedCompanies={getSavedCompanies()}
-            onNavigate={handleNavigate}
-            onRemoveBookmark={handleRemoveBookmark}
-          />
-        );
-      
-      case 'data-status':
-        return <DataStatusPage />;
-      
-      case 'instrument':
-        if (currentTicker) {
-          // Redirect instrument page to company page for unified experience
+          if (currentCompanyId) {
+            const company = findCompanyById(currentCompanyId);
+            if (company) {
+              return (
+                <CompanyPage
+                  ticker={company.ticker}
+                  onNavigate={handleNavigate}
+                  returnPath="explore-compare"
+                />
+              );
+            }
+          }
+          // If no company found, redirect to home
+          setCurrentPage('home');
+          return <HomePage onNavigate={handleNavigate} />;
+        
+        case 'portfolio':
+          return <PortfolioPage onNavigate={handleNavigate} />;
+        
+        case 'compare':
+          return <ComparePage onNavigate={handleNavigate} />;
+        
+        case 'explore-compare':
+          return <ExploreComparePage onNavigate={handleNavigate} />;
+        
+        case 'ai':
+          return <AIPage onNavigate={handleNavigate} />;
+        
+        case 'insights':
+          return <InsightsPage onNavigate={handleNavigate} />;
+        
+        case 'explorer':
+          return <ESGExplorer />;
+        
+        case 'watchlist':
           return (
-            <CompanyPage
-              ticker={currentTicker.symbol}
+            <WatchlistPage
+              savedCompanies={getSavedCompanies()}
               onNavigate={handleNavigate}
-              returnPath="home"
+              onRemoveBookmark={handleRemoveBookmark}
             />
           );
-        }
-        // If no ticker, redirect to home
-        setCurrentPage('home');
-        return <HomePage onNavigate={handleNavigate} onInstrumentSelect={handleInstrumentNavigate} />;
-      
-      case 'home':
-      default:
-        return <HomePage onNavigate={handleNavigate} onInstrumentSelect={handleInstrumentNavigate} />;
+        
+        case 'data-status':
+          return <DataStatusPage />;
+        
+        case 'instrument':
+          if (currentTicker) {
+            // Redirect instrument page to company page for unified experience
+            return (
+              <CompanyPage
+                ticker={currentTicker.symbol}
+                onNavigate={handleNavigate}
+                returnPath="home"
+              />
+            );
+          }
+          // If no ticker, redirect to home
+          setCurrentPage('home');
+          return <HomePage onNavigate={handleNavigate} onInstrumentSelect={handleInstrumentNavigate} />;
+        
+        case 'home':
+        default:
+          return <HomePage onNavigate={handleNavigate} onInstrumentSelect={handleInstrumentNavigate} />;
+      }
+    } catch (error) {
+      console.error('Error rendering page:', error);
+      return <HomePage onNavigate={handleNavigate} onInstrumentSelect={handleInstrumentNavigate} />;
     }
   };
 
@@ -161,26 +164,28 @@ function App() {
 
   const pageTransition = {
     type: "tween" as const,
-    ease: "easeInOut",
+    ease: [0.4, 0.0, 0.2, 1] as const,
     duration: 0.3
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <Header currentPage={currentPage} onNavigate={handleNavigate} />
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentPage + (currentTicker?.symbol || currentCompanyId || '')}
-          initial="initial"
-          animate="in"
-          exit="out"
-          variants={pageVariants}
-          transition={pageTransition}
-        >
-          {renderCurrentPage()}
-        </motion.div>
-      </AnimatePresence>
-    </div>
+    <ErrorBoundary>
+      <div className="min-h-screen bg-slate-50">
+        <Header currentPage={currentPage} onNavigate={handleNavigate} />
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentPage + (currentTicker?.symbol || currentCompanyId || '')}
+            initial="initial"
+            animate="in"
+            exit="out"
+            variants={pageVariants}
+            transition={pageTransition}
+          >
+            {renderCurrentPage()}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </ErrorBoundary>
   );
 }
 
