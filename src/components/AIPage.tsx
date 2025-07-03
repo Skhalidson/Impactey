@@ -37,6 +37,13 @@ What would you like to know about ESG investing?`,
       timestamp: new Date()
     };
     setMessages([welcomeMessage]);
+
+    // Ensure page scrolls to very top when AI page loads
+    const scrollTimeout = setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 50);
+
+    return () => clearTimeout(scrollTimeout);
   }, []);
 
   useEffect(() => {

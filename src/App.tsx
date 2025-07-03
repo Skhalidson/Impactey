@@ -43,6 +43,34 @@ function App() {
     }
   }, [bookmarkedCompanies]);
 
+  // Enhanced scroll to top on page navigation
+  useEffect(() => {
+    const scrollToTop = () => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    };
+
+    // For AI page, ensure scroll happens after animation completes
+    if (currentPage === 'ai') {
+      // Use a longer delay for AI page to ensure complete render
+      const aiScrollTimeout = setTimeout(() => {
+        scrollToTop();
+        // Fallback scroll after additional delay to ensure very top is reached
+        setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 100);
+      }, 400); // Wait for page transition animation to complete
+
+      return () => clearTimeout(aiScrollTimeout);
+    } else {
+      // For other pages, immediate scroll
+      const generalScrollTimeout = setTimeout(scrollToTop, 100);
+      return () => clearTimeout(generalScrollTimeout);
+    }
+  }, [currentPage]); // Trigger on page change
+
   const handleNavigate = (page: string, companyId?: string, ticker?: TickerData) => {
     // Clear previous state when navigating
     setCurrentTicker(null);
