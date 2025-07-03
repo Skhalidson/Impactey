@@ -1,4 +1,15 @@
 {
+  "rewrites": [
+    { 
+      "source": "/(.*)", 
+      "destination": "/" 
+    }
+  ],
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
   "git": {
     "deploymentEnabled": {
       "main": true,
@@ -9,23 +20,7 @@
     "autoAlias": false,
     "autoJobCancelation": true
   },
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
-  ],
   "env": {
     "NODE_ENV": "production"
-  },
-  "buildCommand": "npm run build"
+  }
 } 
