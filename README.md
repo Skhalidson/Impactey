@@ -1,28 +1,98 @@
-# Impactey
+# 🌱 Impactey
+### *See How Sustainable Your Portfolio Really Is*
 
-A modern web application for analyzing and tracking company sustainability impact. Impactey helps ESG analysts, sustainable investors, and students evaluate companies based on their environmental, social, and governance (ESG) performance.
+Impactey is a modern ESG (Environmental, Social, Governance) investing dashboard that empowers investors to make informed sustainable investment decisions. Track your portfolio's ESG performance, compare companies by sustainability metrics, and get AI-powered insights—all without the greenwashing. Your personal ESG clarity engine for sustainable investing.
 
-## Features
+🔗 **[Live Demo: impactey.net](https://impactey.net)**
 
-- **Company Sustainability Analysis**: View detailed ESG metrics and sustainability scores for various companies
-- **Watchlist Management**: Save and track companies of interest
-- **Responsive Design**: Modern, mobile-friendly interface built with Tailwind CSS
-- **Real-time Data**: Local storage for bookmarking and personalization
+---
 
-## Tech Stack
+## ✨ Key Features
 
-- **Frontend Framework**: React 18 with TypeScript
-- **Build Tool**: Vite
-- **Styling**: Tailwind CSS
-- **Icons**: Lucide React
-- **Development**: ESLint, PostCSS, Autoprefixer
+🔍 **Smart Company Search & Analysis**
+- Real-time search across 20+ major companies and ETFs
+- Comprehensive ESG scoring and performance metrics
+- Company controversy tracking and impact analysis
 
-## Installation
+📊 **Portfolio ESG Tracking**
+- Track your portfolio's overall ESG performance
+- Benchmark against industry standards
+- Visualize sustainability impact over time
+
+🤖 **AI-Powered Insights**
+- Impactey AI for personalized ESG investment advice
+- Natural language queries about sustainability metrics
+- Smart recommendations based on your values
+
+🔬 **Explore & Compare**
+- Side-by-side company ESG comparisons
+- Sector-specific sustainability insights
+- Discover ESG leaders across industries
+
+📚 **Educational Hub**
+- Learn about ESG principles and best practices
+- Stay updated with sustainability trends
+- Understand the impact of your investments
+
+⭐ **Watchlist Management**
+- Save and track your favorite sustainable companies
+- Get notified about ESG performance changes
+- Build your personalized sustainable investment pipeline
+
+---
+
+## 🚀 Live Demo
+
+**Production Site**: [https://impactey.net](https://impactey.net)
+
+*Experience the full power of ESG investing with real-time data and AI insights.*
+
+---
+
+## 🛠️ Tech Stack
+
+**Frontend Framework**
+- ⚛️ React 18 with TypeScript
+- 🎨 TailwindCSS for styling
+- ✨ Framer Motion for animations
+- 🔧 Vite for build tooling
+
+**APIs & Data**
+- 🤖 OpenAI API for AI-powered insights
+- 📰 GNews API for real-time news and controversies
+- 📊 ESG data integration
+- 🔄 Real-time ticker data
+
+**Deployment & Infrastructure**
+- ☁️ Vercel for hosting and deployment
+- 📱 Responsive design for all devices
+- ⚡ Optimized performance with code splitting
+
+---
+
+## 📸 Screenshots
+
+*Screenshots will be added here showcasing:*
+- 🏠 Homepage with company search
+- 📊 Portfolio tracking dashboard
+- 🤖 AI chat interface
+- 🔍 Company comparison view
+- 📱 Mobile responsive design
+
+---
+
+## 🏗️ Local Development Setup
+
+### Prerequisites
+- Node.js 18+ and npm
+- Git
+
+### Installation
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
-   cd impactey
+   git clone https://github.com/Skhalidson/Impactey.git
+   cd Impactey
    ```
 
 2. **Install dependencies**
@@ -30,123 +100,135 @@ A modern web application for analyzing and tracking company sustainability impac
    npm install
    ```
 
-3. **Start the development server**
+3. **Start development server**
    ```bash
    npm run dev
    ```
 
-4. **Open your browser**
-   Navigate to `http://localhost:5173` to view the application.
+4. **Open in browser**
+   ```
+   http://localhost:5173
+   ```
 
-## Available Scripts
+### Available Scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run lint` - Run ESLint
-- `npm run preview` - Preview production build
-
-## Project Structure
-
-```
-src/
-├── components/          # React components
-│   ├── Header.tsx      # Navigation header
-│   ├── HomePage.tsx    # Main landing page
-│   ├── CompanyPage.tsx # Individual company details
-│   └── WatchlistPage.tsx # Saved companies
-├── data/               # Static data and utilities
-│   └── companies.ts    # Company data and search functions
-├── types/              # TypeScript type definitions
-│   └── index.ts        # Company and app types
-├── App.tsx             # Main application component
-├── main.tsx            # Application entry point
-└── index.css           # Global styles
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run preview      # Preview production build
+npm run lint         # Run ESLint
 ```
 
-## How to Contribute
+---
+
+## 🚀 Deployment
+
+### Vercel Deployment (Recommended)
+
+The project is optimized for deployment on Vercel:
+
+1. **Connect GitHub Repository**
+   - Link your GitHub repo to Vercel
+   - Enable automatic deployments from `main` branch
+
+2. **Build Configuration**
+   ```json
+   {
+     "buildCommand": "npm run build",
+     "outputDirectory": "dist",
+     "framework": "vite"
+   }
+   ```
+
+3. **Environment Variables**
+   - Set up any required API keys in Vercel dashboard
+   - Configure production environment settings
+
+4. **Custom Domain**
+   - Add your custom domain (e.g., impactey.net)
+   - Configure SSL certificates automatically
+
+### Manual Deployment
+```bash
+npm run build
+npx vercel --prod --yes
+```
+
+---
+
+## 📁 Project Structure
+
+```
+Impactey/
+├── public/                 # Static assets
+├── src/
+│   ├── components/         # React components
+│   │   ├── common/        # Shared components
+│   │   ├── AIPage.tsx     # AI chat interface
+│   │   ├── HomePage.tsx   # Main dashboard
+│   │   └── ...
+│   ├── data/              # Static data and fallbacks
+│   ├── services/          # API services and utilities
+│   ├── types/             # TypeScript type definitions
+│   ├── App.tsx           # Main app component
+│   └── main.tsx          # App entry point
+├── dist/                  # Production build output
+├── vercel.json           # Vercel deployment config
+├── vite.config.ts        # Vite configuration
+└── package.json          # Dependencies and scripts
+```
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions to make ESG investing more accessible! Here's how you can help:
 
 1. **Fork the repository**
 2. **Create a feature branch**
    ```bash
-   git checkout -b feature/your-feature-name
+   git checkout -b feature/amazing-feature
    ```
 3. **Make your changes**
-4. **Run tests and linting**
+4. **Commit with descriptive messages**
    ```bash
-   npm run lint
+   git commit -m "✨ Add amazing ESG feature"
    ```
-5. **Commit your changes**
-   ```bash
-   git commit -m "Add your feature description"
-   ```
-6. **Push to your branch**
-   ```bash
-   git push origin feature/your-feature-name
-   ```
-7. **Create a Pull Request**
+5. **Push to your branch**
+6. **Open a Pull Request**
 
-## Target Audience
+### Contribution Guidelines
+- Follow the existing code style and TypeScript patterns
+- Add comments for complex ESG calculations
+- Test your changes across different devices
+- Update documentation as needed
 
-- **ESG Analysts**: Professionals analyzing environmental, social, and governance factors
-- **Sustainable Investors**: Investors focused on ESG-compliant companies
-- **Students**: Academic users studying sustainability and corporate responsibility
-- **Sustainability Consultants**: Professionals advising on ESG practices
+---
 
-## Deployment to Vercel
+## 📜 License
 
-1. **Install Vercel CLI** (if not already installed)
-   ```bash
-   npm i -g vercel
-   ```
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-2. **Build the project**
-   ```bash
-   npm run build
-   ```
+---
 
-3. **Deploy to Vercel**
-   ```bash
-   vercel
-   ```
+## 🙏 Credits
 
-4. **Follow the prompts**:
-   - Link to existing project or create new
-   - Set project name (e.g., "impactey")
-   - Choose deployment settings
+**Built with ❤️ for sustainable investing**
 
-5. **Automatic deployments**: Future pushes to main branch will automatically deploy
+- ESG data providers and sustainability metrics
+- OpenAI for AI-powered insights
+- GNews for real-time company news
+- The open-source community for amazing tools
 
-## Environment Variables
+---
 
-To use the FinancialModelingPrep ESG API, create a `.env` file in the root directory:
+## 📧 Contact
 
-```bash
-# FinancialModelingPrep API Key
-# Get your free API key from: https://financialmodelingprep.com/developer/docs/
-VITE_FMP_API_KEY=your_api_key_here
+For questions, suggestions, or collaboration opportunities:
 
-# ESG API Key (for future use)
-VITE_ESG_API_KEY=your_esg_api_key_here
-```
+- **Website**: [impactey.net](https://impactey.net)
+- **GitHub**: [Skhalidson/Impactey](https://github.com/Skhalidson/Impactey)
 
-### Getting an API Key
+---
 
-1. Visit [FinancialModelingPrep](https://financialmodelingprep.com/developer/docs/)
-2. Sign up for a free account
-3. Get your API key from the dashboard
-4. Add it to your `.env` file
-
-## Browser Support
-
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
-
-## License
-
-This project is licensed under the MIT License.
-
-## Support
-
-For questions or support, please open an issue in the repository. 
+*Empowering investors to make sustainable choices, one portfolio at a time.* 🌍✨ 
